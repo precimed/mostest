@@ -1,20 +1,27 @@
 % download and compile https://se.mathworks.com/matlabcentral/fileexchange/27076-shuffle  (just once)
-mex Shuffle.c 
+% mex Shuffle.c 
 
+if 0
 bfile = '/home/oleksanf/vmshare/data/UKBDATA/genotypes/imputed/UKB26502_QCed_230519';
 LDmat_file = '/home/oleksanf/vmshare/data/UKBDATA/genotypes/imputed/UKB26502_QCed_230519_r2p1.mat';
 roi_file = '/home/oleksanf/vmshare/data/UKBDATA/phenotypes/FS/UKB26502_GWAS_qnorm_ecdf_ordered_230519.txt'
 dict_file = '/home/oleksanf/vmshare/data/UKBDATA/phenotypes/FS/FSdict_ver53_230519.txt';
 out_prefix = '/home/oleksanf/vmshare/github/most/results/lamreg0';
-
-do_prune = true;   % only use LD idependent SNPs
-maf_thresh = 0.05; % only use SNPs with maf above this threshold
-lam_reg = 0;        % regularization threshold for pre-whitening
+else
+bfile = '/space/gwas-syn1/1/data/GWAS/UKBioBank/users/MOSTest/UKB26502_QCed_230519';
+LDmat_file = '/space/gwas-syn1/1/data/GWAS/UKBioBank/users/MOSTest_LD/UKB26502_QCed_230519_r2p1.mat';
+roi_file = '/space/gwas-syn1/1/data/GWAS/UKBioBank/users/MOSTest/UKB26502_GWAS_qnorm_ecdf_ordered_230519.txt';
+dict_file =  '/space/gwas-syn1/1/data/GWAS/UKBioBank/users/MOSTest_LD/FSdict_ver53_010719.txt';
+out_prefix = '/space/gwas-syn1/1/data/GWAS/UKBioBank/users/MOSTest_LD/alex_runs/2019_07_02_lambda1p0_maf0p005'
+end
+do_prune = false;   % only use LD idependent SNPs
+maf_thresh = 0.005;   % only use SNPs with maf above this threshold
+lam_reg = 1.0;      % regularization threshold for pre-whitening
                     % 0 means "100% whitening", 1 disables whitening
-chr_filter = 1;
+chr_filter = nan;  % filter to chromosome 1
 
 snps = 10408776; nsubj = 26502;
-df = readtable(roi_file);
+df = readtable(roi_file, 'Delimiter', 'tab');
 ymat_orig = table2array(df);  %d.Properties.VariableNames - column names
 npheno=size(ymat_orig, 2);
 rois = df.Properties.VariableNames;
@@ -31,7 +38,8 @@ defvec = randn(size(LDmat, 1), 1);
 if isfinite(maf_thresh), defvec(mafvec < maf_thresh) = nan; end;
 if isfinite(chr_filter), defvec(chrnumvec ~= chr_filter) = nan; end;
 if do_prune, defvec = FastPrune(defvec, LDmat); end;
-snp_idx = find(isfinite(defvec));
+defvec=isfinite(defvec);
+snp_idx = find(defvec);
 
 mask = false(length(rois), 1);
 table = struct('is_DK_AREA', mask, 'is_DK_VOLUME', mask, 'is_DK_THICKNESS', mask, 'is_ASEG', mask);
@@ -51,7 +59,7 @@ table.type(table.is_DK_VOLUME) = 2;
 table.type(table.is_DK_THICKNESS) = 3;
 table.type(table.is_ASEG) = 4;
 
-if 1
+if 0
   ymat = nan(size(ymat_orig));
   for domain = unique(table.type)'
     C = corr(ymat_orig(:, table.type == domain));
@@ -80,18 +88,23 @@ if 1
   zmat_bak = zmat;
   
   %save('gwas2.UKB26502_GWAS_qnorm_ecdf_ordered_230519.mat', '-v7.3', 'zmat');
-else
+  zmat_orig = zmat_bak(:, :, 1); zmat_perm = zmat_bak(:, :, 2); measures=table.measure;
+  zmat = zmat_bak; save(sprintf('%s_zmat.mat', out_prefix), '-v7.3', 'zmat_orig', 'zmat_perm', 'mafvec', 'defvec', 'measures');
+end
+
+if 0
   load('gwas.UKB26502_GWAS_qnorm_ecdf_ordered_230519.mat');
 end
 
 
 ivec_list = {{'dk_area',       find(table.is_DK_AREA)}, ...
              {'dk_thick',      find(table.is_DK_THICKNESS)}, ...
-             {'dk_vol',        find(table.is_DK_VOLUME)}, ...
-             {'dk_area_thick', find(table.is_DK_AREA | table.is_DK_THICKNESS)}, ...
-             {'dk_all',        find(table.is_DK_AREA | table.is_DK_THICKNESS | table.is_DK_VOLUME)}, ...
              {'aseg_vol',      find(table.is_ASEG)}, ...
              {'all',           find(table.is_DK_AREA | table.is_DK_THICKNESS | table.is_ASEG)}};
+
+%             {'dk_vol',        find(table.is_DK_VOLUME)}, ...
+%             {'dk_area_thick', find(table.is_DK_AREA | table.is_DK_THICKNESS)}, ...
+%             {'dk_all',        find(table.is_DK_AREA | table.is_DK_THICKNESS | table.is_DK_VOLUME)}, ...
 %ivec_list = {{'all',           find(table.is_DK_AREA | table.is_DK_THICKNESS | table.is_ASEG)}};
 
 for iveci = 1:length(ivec_list)
@@ -145,10 +158,12 @@ for iveci = 1:length(ivec_list)
   [hc_logpdfvecs hv_logpdfvecs] = hist(logpdfvecs(2,ivec_snp_good),1000); chc_logpdfvecs = cumsum(hc_logpdfvecs)/sum(hc_logpdfvecs);
   pd_logpdfvecs = fitdist(colvec(logpdfvecs(2,ivec_snp_good)),'gamma'); % Seems to work -- beta and wbl  do not
 
-  sfigure(fh2); 
-  subplot(2,length(ivec_list),0*length(ivec_list)+iveci); plot(hv_maxlogpvecs,-log10(1-chc_maxlogpvecs),hv_maxlogpvecs,-log10(1-cdf(pd_minpvecs,10.^-hv_maxlogpvecs,'upper')), '.', 'LineWidth',2);title(ivec_name); 
+  sfigure(fh2);
+  cdf_minpvecs=cdf(pd_minpvecs,10.^-hv_maxlogpvecs,'upper');
+  subplot(2,length(ivec_list),0*length(ivec_list)+iveci); plot(hv_maxlogpvecs,-log10(1-chc_maxlogpvecs),hv_maxlogpvecs,-log10(1-cdf_minpvecs), '.', 'LineWidth',2);title(ivec_name); 
   if iveci == 1, ylabel('minP'); end;
-  subplot(2,length(ivec_list),1*length(ivec_list)+iveci); plot(hv_logpdfvecs,-log10(1-chc_logpdfvecs),hv_logpdfvecs,-log10(1-pd_logpdfvecs.cdf(hv_logpdfvecs)),'.', 'LineWidth',2)
+  cdf_logpdfvecs = pd_logpdfvecs.cdf(hv_logpdfvecs);
+  subplot(2,length(ivec_list),1*length(ivec_list)+iveci); plot(hv_logpdfvecs,-log10(1-chc_logpdfvecs),hv_logpdfvecs,-log10(1-cdf_logpdfvecs),'.', 'LineWidth',2)
   if iveci == 1, ylabel('MOST'); end;
 
 % Plot FWER-corrected GWAS stats
@@ -183,11 +198,11 @@ for iveci = 1:length(ivec_list)
 
   minPval = maxlogpvecs_corr(1, :);
   mostPval = logpdfvecs_corr(1, :);
-  save(sprintf('%s_%s.mat', out_prefix, ivec_name), '-v7', 'mostPval', 'minPval');
+  save(sprintf('%s_%s.mat', out_prefix, ivec_name), '-v7', 'mostPval', 'minPval', 'defvec', 'C0', 'C1', 'hv_maxlogpvecs', 'hv_logpdfvecs', 'hc_maxlogpvecs', 'chc_logpdfvecs', 'cdf_minpvecs', 'cdf_logpdfvecs', 'ivec_name');
   
+  saveas(fh1,sprintf('%s_fh1.pdf', out_prefix))
+  saveas(fh2,sprintf('%s_fh2.pdf', out_prefix))
   drawnow;
 end
 
-saveas(fh1,sprintf('%s_fh1.pdf', out_prefix))
-saveas(fh2,sprintf('%s_fh2.pdf', out_prefix))
-saveas(fh3,sprintf('%s_fh3.pdf', out_prefix))
+%saveas(fh3,sprintf('%s_fh3.pdf', out_prefix))
