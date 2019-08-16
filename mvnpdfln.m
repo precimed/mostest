@@ -39,6 +39,7 @@ function y = mvnpdfln(X, Mu, Sigma)
 
 %   Copyright 1993-2011 The MathWorks, Inc.
 
+%   (!) This function was modified to return logarithm of MVNPDF.
 
 if nargin<1
     error(message('stats:mvnpdf:TooFewInputs'));
