@@ -1,19 +1,24 @@
-% download and compile https://se.mathworks.com/matlabcentral/fileexchange/27076-shuffle  (just once)
-% mex Shuffle.c 
+% example commands:
+if 0
+clear; pheno = 'SubcorticalVolume.csv'; out = 'SubcorticalVolume'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'CorticalArea.csv'; out = 'CorticalArea';           bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'CorticalThickness.csv'; out = 'CorticalThickness'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'all.csv'; out = 'all';                             bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+end
 
-% pheno = 'SubcorticalVolume.csv'; out = 'SubcorticalVolume'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502;
-% pheno = 'SubcorticalVolume.csv'; out = 'SubcorticalVolume'; bfile = 'tmp'; snps = 102079; nsubj = 26502; 
-
+% required input
 if ~exist('pheno', 'var'), error('pheno file is required'); end
 if ~exist('bfile', 'var'), error('bfile is required'); end
-if ~exist('out', 'var'), error('out file prefix is required'); end
-if ~exist('snps', 'var'), error('number of SNPs in --bfile must be specified as "snps" parameter'); end
+if ~exist('out', 'var'),   error('out file prefix is required'); end
+if ~exist('snps', 'var'),  error('number of SNPs in --bfile must be specified as "snps" parameter'); end
 if ~exist('nsubj', 'var'), error('number of subjects in --bfile and pheno files must be specified as "nsubj" parameter'); end
 
-
+% optional arguments
 if ~exist('chunk', 'var'), chunk = 10000; end;
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
 if ~exist('zmat_name', 'var'), zmat_name = ''; end;
+
+if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
 
 fprintf('Loading phenotype matrix from %s... ', pheno);
 ymat_orig = table2array(readtable(pheno, 'Delimiter', 'tab'));
@@ -30,7 +35,7 @@ if isempty(zmat_name)
 
   fprintf('Perform GWAS on %s (%i SNPs are expected)...\n', bfile, snps)
   zmat=zeros(snps, npheno, 2, 'single'); 
-
+  nvec=zeros(snps, 1, 'single');
   for i=1:chunk:snps
     j=min(i+chunk-1, snps);
     fprintf('gwas: loading snps %i to %i... ', i, j);    tic;
@@ -42,6 +47,7 @@ if isempty(zmat_name)
     [~, zmat_perm] = nancorr(ymat, Shuffle(geno));
     zmat(i:j, :, 1) = zmat_orig';
     zmat(i:j, :, 2) = zmat_perm';
+    nvec(i:j) = sum(isfinite(geno))';
     fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
   end
   
@@ -108,7 +114,7 @@ mostPval = logpdfvecs_corr(1, :);
 fname=sprintf('%s.mat', out);
 fprintf('saving %s... ', fname);
 save(fname, '-v7', ...
- 'mostPval', 'minPval', 'C0', 'C1', 'ivec_snp_good', ...
+ 'mostPval', 'minPval', 'nvec', 'C0', 'C1', 'ivec_snp_good', ...
  'hv_maxlogpvecs', 'hv_logpdfvecs', 'hc_maxlogpvecs', ...
  'chc_logpdfvecs', 'cdf_minpvecs', 'cdf_logpdfvecs');
 fprintf('Done.\n')
