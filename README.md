@@ -36,9 +36,11 @@ mostest                                  % starts the analysis
 
 The output is stored in files
 ```
-SubcorticalVolume.mat      - main results
-SubcorticalVolume_zmat.mat - gwas Z scores and 
+SubcorticalVolume.mat      - main results, i.e. -log10(pval)
+SubcorticalVolume_zmat.mat - gwas Z scores (original and permuted)
 ```
+
+See [process_results.py](process_results.py) for an example of a post-processing script that coverts results from .mat to .csv files.
 
 ## Other considerations
 
