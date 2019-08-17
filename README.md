@@ -40,7 +40,11 @@ SubcorticalVolume.mat      - main results, i.e. -log10(pval)
 SubcorticalVolume_zmat.mat - gwas Z scores (original and permuted)
 ```
 
-See [process_results.py](process_results.py) for an example of a post-processing script that coverts results from .mat to .csv files.
+To convert .mat files to .csv files use [process_results.py](process_results.py), for example as follows:
+
+```
+python process_results.py UKB26502_QCed_230519_maf0p005_chr21.bim SubcorticalVolume
+```
 
 ## Other considerations
 
