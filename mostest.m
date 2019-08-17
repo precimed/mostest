@@ -4,6 +4,7 @@ clear; pheno = 'SubcorticalVolume.csv'; out = 'SubcorticalVolume'; bfile = 'UKB2
 clear; pheno = 'CorticalArea.csv'; out = 'CorticalArea';           bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
 clear; pheno = 'CorticalThickness.csv'; out = 'CorticalThickness'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
 clear; pheno = 'all.csv'; out = 'all';                             bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'all.csv'; out = 'all_chr21';                       bfile = 'UKB26502_QCed_230519_maf0p005_chr21'; snps = 102079; nsubj = 26502; mostest;
 end
 
 % required input
@@ -21,7 +22,9 @@ if ~exist('zmat_name', 'var'), zmat_name = ''; end;
 if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
 
 fprintf('Loading phenotype matrix from %s... ', pheno);
-ymat_orig = table2array(readtable(pheno, 'Delimiter', 'tab'));
+ymat_df = readtable(pheno, 'Delimiter', 'tab');
+measures = ymat_df.Properties.VariableNames;
+ymat_orig = table2array(ymat_df);
 npheno=size(ymat_orig, 2);
 fprintf('Done, %i phenotypes found\n', npheno);
 if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, while nsubj argument is specified as %i. These must be consistent.', size(ymat_orig, 1), nsubj); end;
@@ -54,7 +57,7 @@ if isempty(zmat_name)
   zmat_orig = zmat(:, :, 1); zmat_perm = zmat(:, :, 2);
   fname = sprintf('%s_zmat.mat', out);
   fprintf('saving %s as -v7.3... ', fname);
-  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm');
+  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures');
   fprintf('OK.\n')
 else
   fprintf('loading %s... ', zmat_name);
