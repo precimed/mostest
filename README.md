@@ -45,7 +45,8 @@ To convert .mat files to .csv files use [process_results.py](process_results.py)
 ```
 Usage: process_results.py <bim> <fname> [<out>], where
  bim   - path to bim file (reference set of SNPs
- fname - prefix of .mat files output by mostest.m, ie. fname should be the same as "out" argument of the mostest.m
+ fname - prefix of .mat files output by mostest.m, 
+         i.e. fname should be the same as "out" argument of the mostest.m
  out   - optional suffix for output files, by defautl fname will be used
 ```
 
