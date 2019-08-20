@@ -1,35 +1,28 @@
-% example commands:
-if 0
-clear; pheno = 'SubcorticalVolume.csv'; out = 'SubcorticalVolume'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'CorticalArea.csv'; out = 'CorticalArea';           bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'CorticalThickness.csv'; out = 'CorticalThickness'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'all.csv'; out = 'all';                             bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'all.csv'; out = 'all_chr21';                       bfile = 'UKB26502_QCed_230519_maf0p005_chr21'; snps = 102079; nsubj = 26502; mostest;
-end
-
-% required input
-if ~exist('pheno', 'var'), error('pheno file is required'); end
-if ~exist('bfile', 'var'), error('bfile is required'); end
-if ~exist('out', 'var'),   error('out file prefix is required'); end
-if ~exist('snps', 'var'),  error('number of SNPs in --bfile must be specified as "snps" parameter'); end
-if ~exist('nsubj', 'var'), error('number of subjects in --bfile and pheno files must be specified as "nsubj" parameter'); end
-
 % optional arguments
 if ~exist('chunk', 'var'), chunk = 10000; end;
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
 if ~exist('zmat_name', 'var'), zmat_name = ''; end;
+  
+% required input
+if ~exist('out', 'var'),   error('out file prefix is required'); end
+if isempty(zmat_name)
+  if ~exist('pheno', 'var'), error('pheno file is required'); end
+  if ~exist('bfile', 'var'), error('bfile is required'); end
+  if ~exist('snps', 'var'),  error('number of SNPs in --bfile must be specified as "snps" parameter'); end
+  if ~exist('nsubj', 'var'), error('number of subjects in --bfile and pheno files must be specified as "nsubj" parameter'); end
+end
 
 if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
 
-fprintf('Loading phenotype matrix from %s... ', pheno);
-ymat_df = readtable(pheno, 'Delimiter', 'tab');
-measures = ymat_df.Properties.VariableNames;
-ymat_orig = table2array(ymat_df);
-npheno=size(ymat_orig, 2);
-fprintf('Done, %i phenotypes found\n', npheno);
-if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, while nsubj argument is specified as %i. These must be consistent.', size(ymat_orig, 1), nsubj); end;
-
 if isempty(zmat_name)
+  fprintf('Loading phenotype matrix from %s... ', pheno);
+  ymat_df = readtable(pheno, 'Delimiter', 'tab');
+  measures = ymat_df.Properties.VariableNames;
+  ymat_orig = table2array(ymat_df);
+  npheno=size(ymat_orig, 2);
+  fprintf('Done, %i phenotypes found\n', npheno);
+  if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, while nsubj argument is specified as %i. These must be consistent.', size(ymat_orig, 1), nsubj); end;
+
   C = corr(ymat_orig);
   C_reg = (1-lam_reg)*C + lam_reg*diag(max(0.01,diag(C))); % Ridge regularized covariance matrix
   C_inv = inv(C_reg);
@@ -57,17 +50,17 @@ if isempty(zmat_name)
   zmat_orig = zmat(:, :, 1); zmat_perm = zmat(:, :, 2);
   fname = sprintf('%s_zmat.mat', out);
   fprintf('saving %s as -v7.3... ', fname);
-  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures');
+  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures', 'nvec');
   fprintf('OK.\n')
 else
   fprintf('loading %s... ', zmat_name);
   load(zmat_name);
   fprintf('OK.\n')
-  assert(snps==size(zmat_orig, 1))
-  assert(npheno==size(zmat_orig, 2))
+  snps=size(zmat_orig, 1);
+  npheno=size(zmat_orig, 2);
   zmat = zeros(snps, npheno, 2, 'single'); 
-  zmat(:, :, 1) = zmat_orig';
-  zmat(:, :, 2) = zmat_perm';
+  zmat(:, :, 1) = zmat_orig;
+  zmat(:, :, 2) = zmat_perm;
 end
 
 fprintf('running MOSTest analysis...')
