@@ -40,7 +40,29 @@ SubcorticalVolume.mat      - main results, i.e. -log10(pval)
 SubcorticalVolume_zmat.mat - gwas Z scores (original and permuted)
 ```
 
-See [process_results.py](process_results.py) for an example of a post-processing script that coverts results from .mat to .csv files.
+To convert .mat files to .csv files use [process_results.py](process_results.py):
+
+```
+Usage: process_results.py <bim> <fname> [<out>], where
+ bim   - path to bim file (reference set of SNPs
+ fname - prefix of .mat files output by mostest.m, 
+         i.e. fname should be the same as "out" argument of the mostest.m
+ out   - optional suffix for output files, by defautl fname will be used
+```
+
+Output files:
+* ``<out>.most.sumstats`` - summary statistics file for MOSTest p-values (note that Z values has a fake direction)
+* ``<out>.minp.sumstats`` - as above, but based on minP
+* ``<out>_most.zmat.csv`` - GWAS z-scores across all measures for genome-wide significant SNPs according to MOSTest
+* ``<out>_minp.zmat.csv`` - as above, but for SNPs passing 5e-8 according to minP
+* ``<out>.plot.png``      - QQ-like plot highlighting distribution of minP and MOSTest p-values 
+* ``<out>.plot.csv``      - data underlying the above plot
+
+
+Example:
+```
+python process_results.py UKB26502_QCed_230519_maf0p005_chr21.bim SubcorticalVolume
+```
 
 ## Other considerations
 
