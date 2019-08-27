@@ -14,8 +14,6 @@ python process_results.py UKB26502_QCed_230519_maf0p005.bim SubcorticalVolume.no
 
 clear; pheno = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/all.csv'; out = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/all';   chunk=200;   perform_cca=1;                       bfile = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/UKB26502_QCed_230519_maf0p005_chr21'; snps = 102079; nsubj = 26502; mostest;
 
-/space/syn03/1/data/oleksandr/MOSTEST
-
 end
 
 % optional arguments
