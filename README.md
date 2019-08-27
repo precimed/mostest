@@ -32,6 +32,11 @@ snps = 7428630; nsubj = 26502;           % number of snps and subjects in bfile
 mostest                                  % starts the analysis
 ```
 
+Alternatively one may use ``zmat_name`` argument to re-use the original and permuted z-scores from previous MOSTest run:
+```
+zmat_name='SubcorticalVolume_zmat.mat'; out = 'SubcorticalVolume'; mostest
+```
+
 ## MOSTest results
 
 The output is stored in files
