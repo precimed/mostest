@@ -10,6 +10,12 @@ clear; pheno = 'simu/rep2.csv'; out = 'simu/rep2';                 bfile = 'UKB2
 clear; pheno = 'simu/rep3.csv'; out = 'simu/rep3';                 bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
 clear; zmat_name='all.nonorm_zmat.mat'; out = 'all.nonorm';  mostest;
 python process_results.py UKB26502_QCed_230519_maf0p005.bim SubcorticalVolume.nonorm
+
+
+clear; pheno = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/all.csv'; out = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/all';   chunk=200;   perform_cca=1;                       bfile = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/UKB26502_QCed_230519_maf0p005_chr21'; snps = 102079; nsubj = 26502; mostest;
+
+/space/syn03/1/data/oleksandr/MOSTEST
+
 end
 
 % optional arguments
@@ -62,12 +68,12 @@ if isempty(zmat_name)
     if perform_cca
       fprintf('cca... ');   
       ymat1 = [ymat, ones(size(ymat, 1), 1)];
-      for j=1:size(geno, 2)
+      for k=i:j
         % These two are equivalent:
         % [b, bint, r, rint, stats] = regress(y, [X ones(n, 1)]);  stats(3)      % based on F-test
         % [A, B, r, U, V, statsCCA] = canoncorr(X, y);             statsCCA.p  
-        [b, bint, r, rint, stats] = regress(geno(:, j),         ymat1); zvec_cca(i+j-1, 1) = stats(3);
-        [b, bint, r, rint, stats] = regress(shuffle_geno(:, j), ymat1); zvec_cca(i+j-1, 2) = stats(3);
+        [b, bint, r, rint, stats] = regress(geno(:,         k-i+1), ymat1); zvec_cca(k, 1) = stats(3);
+        [b, bint, r, rint, stats] = regress(shuffle_geno(:, k-i+1), ymat1); zvec_cca(k, 2) = stats(3);
       end
     end
 
