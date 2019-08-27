@@ -1,8 +1,22 @@
+% example commands:
+if 0
+clear; pheno = 'SubcorticalVolume.csv'; out = 'SubcorticalVolume'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'CorticalArea.csv'; out = 'CorticalArea';           bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'CorticalThickness.csv'; out = 'CorticalThickness'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'all.csv'; out = 'all';                             bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'all.csv'; out = 'all_chr21'; chunk=200;            bfile = 'UKB26502_QCed_230519_maf0p005_chr21'; snps = 102079; nsubj = 26502; mostest;
+clear; pheno = 'simu/rep1.csv'; out = 'simu/rep1';                 bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'simu/rep2.csv'; out = 'simu/rep2';                 bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; pheno = 'simu/rep3.csv'; out = 'simu/rep3';                 bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
+clear; zmat_name='all.nonorm_zmat.mat'; out = 'all.nonorm';  mostest;
+python process_results.py UKB26502_QCed_230519_maf0p005.bim SubcorticalVolume.nonorm
+end
+
 % optional arguments
 if ~exist('chunk', 'var'), chunk = 10000; end;
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
 if ~exist('zmat_name', 'var'), zmat_name = ''; end;
-  
+if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical correlation analysis
 % required input
 if ~exist('out', 'var'),   error('out file prefix is required'); end
 if isempty(zmat_name)
@@ -32,6 +46,8 @@ if isempty(zmat_name)
   fprintf('Perform GWAS on %s (%i SNPs are expected)...\n', bfile, snps)
   zmat=zeros(snps, npheno, 2, 'single'); 
   nvec=zeros(snps, 1, 'single');
+  zvec_cca=nan(snps, 2);
+
   for i=1:chunk:snps
     j=min(i+chunk-1, snps);
     fprintf('gwas: loading snps %i to %i... ', i, j);    tic;
@@ -39,18 +55,32 @@ if isempty(zmat_name)
     fprintf('processing... ', i, j);   
     geno = nan(size(geno_int8), 'single'); for code = int8([0,1,2]), geno(geno_int8==code) = single(code); end;
 
+    shuffle_geno = Shuffle(geno);
     [~, zmat_orig] = nancorr(ymat, geno);
-    [~, zmat_perm] = nancorr(ymat, Shuffle(geno));
+    [~, zmat_perm] = nancorr(ymat, shuffle_geno);
+
+    if perform_cca
+      fprintf('cca... ');   
+      ymat1 = [ymat, ones(size(ymat, 1), 1)];
+      for j=1:size(geno, 2)
+        % These two are equivalent:
+        % [b, bint, r, rint, stats] = regress(y, [X ones(n, 1)]);  stats(3)      % based on F-test
+        % [A, B, r, U, V, statsCCA] = canoncorr(X, y);             statsCCA.p  
+        [b, bint, r, rint, stats] = regress(geno(:, j),         ymat1); zvec_cca(i+j-1, 1) = stats(3);
+        [b, bint, r, rint, stats] = regress(shuffle_geno(:, j), ymat1); zvec_cca(i+j-1, 2) = stats(3);
+      end
+    end
+
     zmat(i:j, :, 1) = zmat_orig';
     zmat(i:j, :, 2) = zmat_perm';
     nvec(i:j) = sum(isfinite(geno))';
     fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
   end
-  
+
   zmat_orig = zmat(:, :, 1); zmat_perm = zmat(:, :, 2);
   fname = sprintf('%s_zmat.mat', out);
   fprintf('saving %s as -v7.3... ', fname);
-  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures', 'nvec');
+  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures', 'nvec', 'zvec_cca');
   fprintf('OK.\n')
 else
   fprintf('loading %s... ', zmat_name);
