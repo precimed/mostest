@@ -138,6 +138,7 @@ logpdfvecs_corr = -log10(cdf(pd_logpdfvecs,logpdfvecs,'upper'));
 fprintf('Done.\n')
 
 fprintf('GWAS yield minP: %d; MOST: %d\n',sum(maxlogpvecs_corr(1,ivec_snp_good)>-log10(5e-8)),sum(logpdfvecs_corr(1,ivec_snp_good)>-log10(5e-8)));
+fprintf('%i\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t\n', npheno, cond(C0), pd_minpvecs.a, pd_minpvecs.b, pd_logpdfvecs.a, pd_logpdfvecs.b) 
 
 minPval = maxlogpvecs_corr(1, :);
 mostPval = logpdfvecs_corr(1, :);
