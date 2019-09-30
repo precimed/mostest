@@ -48,7 +48,8 @@ if isempty(zmat_name)
   ymat = ymat_orig*W_wht'; % Whitened residualized data
 
   fprintf('Perform GWAS on %s (%i SNPs are expected)...\n', bfile, snps)
-  zmat=zeros(snps, npheno, 2, 'single'); 
+  zmat_orig=zeros(snps, npheno, 'single');
+  zmat_perm=zeros(snps, npheno, 'single');
   nvec=zeros(snps, 1, 'single');
   zvec_cca=nan(snps, 2);
 
@@ -60,8 +61,8 @@ if isempty(zmat_name)
     geno = nan(size(geno_int8), 'single'); for code = int8([0,1,2]), geno(geno_int8==code) = single(code); end;
 
     shuffle_geno = Shuffle(geno);
-    [~, zmat_orig] = nancorr(ymat, geno);
-    [~, zmat_perm] = nancorr(ymat, shuffle_geno);
+    [~, zmat_orig_chunk] = nancorr(ymat, geno);
+    [~, zmat_perm_chunk] = nancorr(ymat, shuffle_geno);
 
     if perform_cca
       fprintf('cca... ');   
@@ -75,13 +76,12 @@ if isempty(zmat_name)
       end
     end
 
-    zmat(i:j, :, 1) = zmat_orig';
-    zmat(i:j, :, 2) = zmat_perm';
+    zmat_orig(i:j, :) = zmat_orig_chunk';
+    zmat_perm(i:j, :) = zmat_perm_chunk';
     nvec(i:j) = sum(isfinite(geno))';
     fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
   end
 
-  zmat_orig = zmat(:, :, 1); zmat_perm = zmat(:, :, 2);
   fname = sprintf('%s_zmat.mat', out);
   fprintf('saving %s as -v7.3... ', fname);
   save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures', 'nvec', 'zvec_cca');
@@ -92,19 +92,16 @@ else
   fprintf('OK.\n')
   snps=size(zmat_orig, 1);
   npheno=size(zmat_orig, 2);
-  zmat = zeros(snps, npheno, 2, 'single'); 
-  zmat(:, :, 1) = zmat_orig;
-  zmat(:, :, 2) = zmat_perm;
 end
 
 fprintf('running MOSTest analysis...')
-ivec_snp_good = all(all(isfinite(zmat), 2), 3);
+ivec_snp_good = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
 
 % correlation structure of the null z scores
-C0 = corr(zmat(ivec_snp_good, :, 2));
+C0 = corr(zmat_perm(ivec_snp_good, :));
 
 % correlation structure of the real z scores
-C1 = corr(zmat(ivec_snp_good, :, 1)); % & Hvec>0.1 & CRvec>0.95 & max(abs(zmat(:,:,1)),[],1)>abs(norminv(1e-5))),1)');
+C1 = corr(zmat_orig(ivec_snp_good, :)); % & Hvec>0.1 & CRvec>0.95 & max(abs(zmat(:,:,1)),[],1)>abs(norminv(1e-5))),1)');
 
 [U S]  = svd(C0); s = diag(S);
 
@@ -117,10 +114,11 @@ C1 = corr(zmat(ivec_snp_good, :, 1)); % & Hvec>0.1 & CRvec>0.95 & max(abs(zmat(:
 %  C0_reg = U*diag(max(s(40),s))*U';
 C0_reg = C0;  % no regularization
 
-logpdfvecs = NaN(size(zmat,3),size(zmat,1)); minpvecs = NaN(size(zmat,3),size(zmat,1)); maxlogpvecs = NaN(size(zmat,3),size(zmat,1));
-for i  = 1:size(zmat,3)
-  logpdfvecs(i,:) = -(mvnpdfln(zmat(:,:,i),0,C0_reg)-mvnpdfln(zeros(size(C0,1),1),0,C0_reg))/log(10); % Should be using mvncdf instead?
-  minpvecs(i,:) = 2*normcdf(-max(abs(zmat(:, :, i)), [], 2));
+logpdfvecs = NaN(2,snps); minpvecs = NaN(2,snps); maxlogpvecs = NaN(2,snps);
+for i  = 1:2
+  if i==1, zmat=zmat_orig; else zmat=zmat_perm; end;
+  logpdfvecs(i,:) = -(mvnpdfln(zmat,0,C0_reg)-mvnpdfln(zeros(size(C0,1),1),0,C0_reg))/log(10); % Should be using mvncdf instead?
+  minpvecs(i,:) = 2*normcdf(-max(abs(zmat), [], 2));
   maxlogpvecs(i, :) = -log10(minpvecs(i, :));
 end
 
