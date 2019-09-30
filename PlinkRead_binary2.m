@@ -6,7 +6,7 @@ if ~issorted(snps), error('PlinkRead_binary2 expect sorted list of snps'); end;
 nsnp = length(snps);
 
 % bit shift to generate the genovalue matrix
-bedprefix = [fileprefix,'.bed'];
+bedprefix = sprintf('%s.bed', fileprefix);
 
 if isempty(geno_values)
     geno_values = zeros(256,4,'int8');
