@@ -19,6 +19,7 @@ end
 % optional arguments
 if ~exist('chunk', 'var'), chunk = 10000; end;
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
+if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;  %  how many smallest eigenvalues of C0 matrix (z score correlation) to regularize
 if ~exist('zmat_name', 'var'), zmat_name = ''; end;
 if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical correlation analysis
 % required input
@@ -110,14 +111,17 @@ C1 = corr(zmat_orig(ivec_snp_good, :)); % & Hvec>0.1 & CRvec>0.95 & max(abs(zmat
 %  max_lambda = s(min(10, length(s)));
 %  max_lambda = min(0.1, s(min(10, length(s)))); % oleksanf: don't regularize unless it's too bad
 
-% C0_reg = U*diag(max(max_lambda,s))*U'; % Good gamma fit
+if (num_eigval_to_regularize > 0), max_lambda=s(end-num_eigval_to_regularize); else max_lambda = 0; end;
+C0_reg = U*diag(max(max_lambda,s))*U'; % Good gamma fit
+
 %  C0_reg = U*diag(max(s(40),s))*U';
-C0_reg = C0;  % no regularization
+%C0_reg = C0;  % no regularization
 
 logpdfvecs = NaN(2,snps); minpvecs = NaN(2,snps); maxlogpvecs = NaN(2,snps);
 for i  = 1:2
   if i==1, zmat=zmat_orig; else zmat=zmat_perm; end;
-  logpdfvecs(i,:) = -(mvnpdfln(zmat,0,C0_reg)-mvnpdfln(zeros(size(C0,1),1),0,C0_reg))/log(10); % Should be using mvncdf instead?
+  %logpdfvecs(i,:) = -(mvnpdfln(zmat,0,C0_reg)-mvnpdfln(zeros(size(C0,1),1),0,C0_reg))/log(10); % Should be using mvncdf instead?
+  logpdfvecs(i,:) = dot(inv(C0_reg)*zmat', zmat');
   minpvecs(i,:) = 2*normcdf(-max(abs(zmat), [], 2));
   maxlogpvecs(i, :) = -log10(minpvecs(i, :));
 end
