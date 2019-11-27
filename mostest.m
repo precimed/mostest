@@ -1,21 +1,3 @@
-% example commands:
-if 0
-clear; pheno = 'SubcorticalVolume.csv'; out = 'SubcorticalVolume'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'CorticalArea.csv'; out = 'CorticalArea';           bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'CorticalThickness.csv'; out = 'CorticalThickness'; bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'all.csv'; out = 'all';                             bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'all.csv'; out = 'all_chr21'; chunk=200;            bfile = 'UKB26502_QCed_230519_maf0p005_chr21'; snps = 102079; nsubj = 26502; mostest;
-clear; pheno = 'simu/rep1.csv'; out = 'simu/rep1';                 bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'simu/rep2.csv'; out = 'simu/rep2';                 bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; pheno = 'simu/rep3.csv'; out = 'simu/rep3';                 bfile = 'UKB26502_QCed_230519_maf0p005'; snps = 7428630; nsubj = 26502; mostest;
-clear; zmat_name='all.nonorm_zmat.mat'; out = 'all.nonorm';  mostest;
-python process_results.py UKB26502_QCed_230519_maf0p005.bim SubcorticalVolume.nonorm
-
-
-clear; pheno = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/all.csv'; out = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/all';   chunk=200;   perform_cca=1;                       bfile = '/oasis/projects/nsf/csd604/oleksanf/MOSTest/UKB26502_QCed_230519_maf0p005_chr21'; snps = 102079; nsubj = 26502; mostest;
-
-end
-
 % optional arguments
 if ~exist('chunk', 'var'), chunk = 10000; end;
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
