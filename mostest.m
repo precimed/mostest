@@ -87,11 +87,13 @@ end
 fprintf('running MOSTest analysis...')
 ivec_snp_good = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
 
+snp_weights = ones(size(zmat_perm, 1), 1);
+
 % correlation structure of the null z scores
-C0 = corr(zmat_perm(ivec_snp_good, :));
+C0 = weightedcorrs(zmat_perm(ivec_snp_good, :), snp_weights(ivec_snp_good));
 
 % correlation structure of the real z scores
-C1 = corr(zmat_orig(ivec_snp_good, :)); % & Hvec>0.1 & CRvec>0.95 & max(abs(zmat(:,:,1)),[],1)>abs(norminv(1e-5))),1)');
+C1 = weightedcorrs(zmat_orig(ivec_snp_good, :), snp_weights(ivec_snp_good)); % & Hvec>0.1 & CRvec>0.95 & max(abs(zmat(:,:,1)),[],1)>abs(norminv(1e-5))),1)');
 
 [U S]  = svd(C0); s = diag(S);
 
