@@ -11,7 +11,7 @@
 MOSTest is implemented as a script in MATLAB and python. We tested MOSTest with the following software configuration:
 * Ubuntu 18.04.
 * MATLAB (tested with 2017a)
-* Python (tested with 3.7).
+* Python (tested with 3.7); required libraries: ``pandas, numpy, h5py``
 
 Other versions are likely to work well too. 
 Since MATLAB and Python are cross-platform we expect MOSTest to run well on Windows and MacOS too.
