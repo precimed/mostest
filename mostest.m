@@ -33,6 +33,8 @@ if isempty(zmat_name)
   fprintf('Perform GWAS on %s (%i SNPs are expected)...\n', bfile, snps)
   zmat_orig=zeros(snps, npheno, 'single');
   zmat_perm=zeros(snps, npheno, 'single');
+  beta_orig=zeros(snps, npheno, 'single');  % skip saving p-values and standard errors (SE)
+  beta_perm=zeros(snps, npheno, 'single');  % (can be derived from Z and BETA)
   nvec=zeros(snps, 1, 'single');
   freqvec=zeros(snps, 1, 'single');
   zvec_cca=nan(snps, 2);
@@ -45,8 +47,8 @@ if isempty(zmat_name)
     geno = nan(size(geno_int8), 'single'); for code = int8([0,1,2]), geno(geno_int8==code) = single(code); end;
 
     shuffle_geno = Shuffle(geno);
-    [~, zmat_orig_chunk] = nancorr(ymat, geno);
-    [~, zmat_perm_chunk] = nancorr(ymat, shuffle_geno);
+    [beta_orig_chunk, zmat_orig_chunk] = nancorr(ymat, geno);
+    [beta_perm_chunk, zmat_perm_chunk] = nancorr(ymat, shuffle_geno);
 
     if perform_cca
       fprintf('cca... ');   
@@ -62,6 +64,8 @@ if isempty(zmat_name)
 
     zmat_orig(i:j, :) = zmat_orig_chunk';
     zmat_perm(i:j, :) = zmat_perm_chunk';
+    beta_orig(i:j, :) = beta_orig_chunk';
+    beta_perm(i:j, :) = beta_perm_chunk';
     nvec(i:j) = sum(isfinite(geno))';
     freqvec(i:j) = (1*sum(geno==1) + 2*sum(geno==2))' ./ (2*nvec(i:j));
     fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
@@ -69,7 +73,7 @@ if isempty(zmat_name)
 
   fname = sprintf('%s_zmat.mat', out);
   fprintf('saving %s as -v7.3... ', fname);
-  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures', 'nvec', 'zvec_cca', 'freqvec');
+  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'beta_orig', 'beta_perm', 'measures', 'nvec', 'zvec_cca', 'freqvec');
   fprintf('OK.\n')
 else
   fprintf('loading %s... ', zmat_name);
