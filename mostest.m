@@ -133,12 +133,16 @@ fprintf('Done.\n')
 fprintf('GWAS yield minP: %d; MOST: %d\n',sum(maxlogpvecs_corr(1,ivec_snp_good)>-log10(5e-8)),sum(logpdfvecs_corr(1,ivec_snp_good)>-log10(5e-8)));
 fprintf('%i\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t\n', npheno, cond(C0), pd_minpvecs.a, pd_minpvecs.b, pd_logpdfvecs.a, pd_logpdfvecs.b) 
 
-minPval = maxlogpvecs_corr(1, :);
-mostPval = logpdfvecs_corr(1, :);
+minp_log10pval_orig = maxlogpvecs_corr(1, :);
+most_log10pval_orig = logpdfvecs_corr(1, :);
+minp_log10pval_perm = maxlogpvecs_corr(2, :);
+most_log10pval_perm = logpdfvecs_corr(2, :);
 fname=sprintf('%s.mat', out);
 fprintf('saving %s... ', fname);
 save(fname, '-v7', ...
- 'mostPval', 'minPval', 'nvec', 'C0', 'C1', 'ivec_snp_good', ...
+ 'most_log10pval_orig', 'minp_log10pval_orig', ...
+ 'most_log10pval_perm', 'minp_log10pval_perm', ...
+ 'nvec', 'C0', 'C1', 'ivec_snp_good', ...
  'hv_maxlogpvecs', 'hv_logpdfvecs', 'hc_maxlogpvecs', ...
  'chc_logpdfvecs', 'cdf_minpvecs', 'cdf_logpdfvecs');
 fprintf('Done.\n')

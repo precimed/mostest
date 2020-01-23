@@ -50,11 +50,11 @@ if __name__ == '__main__':
 
     # generate .sumstats files, compatible with FUMA
     print('Generate {}.***.sumstats files...'.format(out))
-    for test in ['minPval', 'mostPval']:   # in fact mat[test] stores -log10(pval)
+    for test in ['minp_log10pval_orig', 'most_log10pval_orig', 'minp_log10pval_perm', 'most_log10pval_perm']:
         bim['PVAL'] = np.power(10, -mat[test].flatten())
         bim['Z'] = -stats.norm.ppf(bim['PVAL'].values*0.5) #*effect_sign.astype(np.float64) - effect size not available from MOSTest and minP
         bim['N'] = mat['nvec']
-        bim.to_csv('{}.{}.sumstats'.format(out, test.replace('minPval', 'minp').replace('mostPval', 'most')), sep='\t', index=False)
+        bim.to_csv('{}.{}.sumstats'.format(out, test.replace('_log10pval', '')), sep='\t', index=False)
 
     # save matrix of z scores for SNPs passing 5e-08 threshold
     print('Generate {}_***.zmat.csv files...'.format(out))
@@ -62,11 +62,11 @@ if __name__ == '__main__':
         # measures = pd.read_csv(pheno, sep='\t').columns
         measures = [u''.join(chr(c) for c in h5file[h5file['measures'][i, 0]]) for i in range(0, h5file['measures'].shape[0])]
         zmat_orig=np.array(h5file['zmat_orig'])
-        for test in ['minPval', 'mostPval']:   # in fact mat[test] stores -log10(pval)
+        for test in ['minp_log10pval_orig', 'most_log10pval_orig']:
             pval = np.power(10, -mat[test].flatten())
             df_zmat = pd.DataFrame(np.transpose(zmat_orig[:, pval<5e-08]), columns=measures)
             df_zmat.insert(0, 'SNP', bim.SNP.values[pval<5e-08])
-            df_zmat.to_csv(out + test.replace('minPval', '_minp').replace('mostPval', '_most') + '.zmat.csv', index=False, sep='\t')
+            df_zmat.to_csv(out + test.replace('_log10pval', '') + '.zmat.csv', index=False, sep='\t')
 
         # save individual GWAS results ('freqvec' is an indivator that we've saved individual GWAS beta's)
         if 'freqvec' in h5file:
