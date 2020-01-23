@@ -34,6 +34,7 @@ if isempty(zmat_name)
   zmat_orig=zeros(snps, npheno, 'single');
   zmat_perm=zeros(snps, npheno, 'single');
   nvec=zeros(snps, 1, 'single');
+  freqvec=zeros(snps, 1, 'single');
   zvec_cca=nan(snps, 2);
 
   for i=1:chunk:snps
@@ -62,12 +63,13 @@ if isempty(zmat_name)
     zmat_orig(i:j, :) = zmat_orig_chunk';
     zmat_perm(i:j, :) = zmat_perm_chunk';
     nvec(i:j) = sum(isfinite(geno))';
+    freqvec(i:j) = (1*sum(geno==1) + 2*sum(geno==2))' ./ (2*nvec(i:j));
     fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
   end
 
   fname = sprintf('%s_zmat.mat', out);
   fprintf('saving %s as -v7.3... ', fname);
-  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures', 'nvec', 'zvec_cca');
+  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'measures', 'nvec', 'zvec_cca', 'freqvec');
   fprintf('OK.\n')
 else
   fprintf('loading %s... ', zmat_name);
