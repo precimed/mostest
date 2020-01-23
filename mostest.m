@@ -47,8 +47,8 @@ if isempty(zmat_name)
     geno = nan(size(geno_int8), 'single'); for code = int8([0,1,2]), geno(geno_int8==code) = single(code); end;
 
     shuffle_geno = Shuffle(geno);
-    [beta_orig_chunk, zmat_orig_chunk] = nancorr(ymat, geno);
-    [beta_perm_chunk, zmat_perm_chunk] = nancorr(ymat, shuffle_geno);
+    [rmat_orig_chunk, zmat_orig_chunk] = nancorr(ymat, geno);
+    [rmat_perm_chunk, zmat_perm_chunk] = nancorr(ymat, shuffle_geno);
 
     if perform_cca
       fprintf('cca... ');   
@@ -64,8 +64,9 @@ if isempty(zmat_name)
 
     zmat_orig(i:j, :) = zmat_orig_chunk';
     zmat_perm(i:j, :) = zmat_perm_chunk';
-    beta_orig(i:j, :) = beta_orig_chunk';
-    beta_perm(i:j, :) = beta_perm_chunk';
+    beta_factor = std(ymat)' * (1./std(geno, 'omitnan'));
+    beta_orig(i:j, :) = transpose(rmat_orig_chunk .* beta_factor);
+    beta_perm(i:j, :) = transpose(rmat_perm_chunk .* beta_factor);
     nvec(i:j) = sum(isfinite(geno))';
     freqvec(i:j) = (1*sum(geno==1) + 2*sum(geno==2))' ./ (2*nvec(i:j));
     fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
