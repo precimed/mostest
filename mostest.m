@@ -4,6 +4,8 @@ if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-w
 if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;  %  how many smallest eigenvalues of C0 matrix (z score correlation) to regularize
 if ~exist('zmat_name', 'var'), zmat_name = ''; end;
 if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical correlation analysis
+if ~exist('apply_int', 'var'), apply_int = true; end;       % apply rank-based inverse normal transform
+
 % required input
 if ~exist('out', 'var'),   error('out file prefix is required'); end
 if isempty(zmat_name)
@@ -23,6 +25,21 @@ if isempty(zmat_name)
   npheno=size(ymat_orig, 2);
   fprintf('Done, %i phenotypes found\n', npheno);
   if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, while nsubj argument is specified as %i. These must be consistent.', size(ymat_orig, 1), nsubj); end;
+
+  if apply_int
+    % perform rank-based inverse normal transform, equivalently to the following R code:
+    % DM[,f] <- qnorm(ecdf(DM[,f])(DM[,f]) - 0.5/dim(DM)[1])
+    kurt = nan(npheno, 2);
+    for pheno_index=1:npheno
+      vals = ymat_orig(:, pheno_index); kurt(pheno_index, 1) = kurtosis(vals);
+      [F, X] = ecdf(vals); F=transpose(F(2:end)); X=transpose(X(2:end));
+      vals = interp1(X,F,vals,'nearest') - 0.5 / length(vals);
+      vals2 = norminv(vals);
+      ymat_orig(:, pheno_index) = vals2; kurt(pheno_index, 2) = kurtosis(vals2);
+    end
+    fprintf('kurtosis before INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 1)), max(kurt(:, 1)))
+    fprintf('kurtosis after  INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 2)), max(kurt(:, 2)))
+  end
 
   C = corr(ymat_orig);
   C_reg = (1-lam_reg)*C + lam_reg*diag(max(0.01,diag(C))); % Ridge regularized covariance matrix

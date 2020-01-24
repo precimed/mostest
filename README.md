@@ -125,9 +125,11 @@ Output of ``process_results.py``:
   DM[,which(colnames(DM)==f)] <- TempModel$coefficients[1,1] + TempModel$residuals
   ```
 
-* all phenotypes should be inverse-rank transformed into a normal distribution, for example via qnorm(ecdf(...)) in R:
+* by default all phenotypes are automatically inverse-rank transformed into a normal distribution, 
+  in a way equivalent to the qnorm(ecdf(...)) function in R:
   ```
   DM[,f] <- qnorm(ecdf(DM[,f])(DM[,f]) - 0.5/dim(DM)[1])
   ```
+  If you want to disable this step, specify ``apply_int=0; ``  in your matlab script before running ``mostest``.
 
 * we recommend that bfile only include SNPs with MAF above 0.5%
