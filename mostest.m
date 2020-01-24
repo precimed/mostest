@@ -27,20 +27,19 @@ if isempty(zmat_name)
   fprintf('Done, %i phenotypes found\n', npheno);
   if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, while nsubj argument is specified as %i. These must be consistent.', size(ymat_orig, 1), nsubj); end;
 
-  if apply_int
-    % perform rank-based inverse normal transform, equivalently to the following R code:
-    % DM[,f] <- qnorm(ecdf(DM[,f])(DM[,f]) - 0.5/dim(DM)[1])
-    kurt = nan(npheno, 2);
-    for pheno_index=1:npheno
-      vals = ymat_orig(:, pheno_index); kurt(pheno_index, 1) = kurtosis(vals);
+  % perform rank-based inverse normal transform, equivalently to the following R code:
+  % DM[,f] <- qnorm(ecdf(DM[,f])(DM[,f]) - 0.5/dim(DM)[1])
+  kurt = nan(npheno, 2);
+  for pheno_index=1:npheno
+    vals = ymat_orig(:, pheno_index); kurt(pheno_index, 1) = kurtosis(vals);
+    if apply_int
       [F, X] = ecdf(vals); F=transpose(F(2:end)); X=transpose(X(2:end));
-      vals = interp1(X,F,vals,'nearest') - 0.5 / length(vals);
-      vals2 = norminv(vals);
-      ymat_orig(:, pheno_index) = vals2; kurt(pheno_index, 2) = kurtosis(vals2);
+      vals = norminv(interp1(X,F,vals,'nearest') - 0.5 / length(vals));
     end
-    fprintf('kurtosis before INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 1)), max(kurt(:, 1)))
-    fprintf('kurtosis after  INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 2)), max(kurt(:, 2)))
+    ymat_orig(:, pheno_index) = vals; kurt(pheno_index, 2) = kurtosis(vals);
   end
+  fprintf('kurtosis before INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 1)), max(kurt(:, 1)))
+  if apply_int, fprintf('kurtosis after  INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 2)), max(kurt(:, 2))); end;
 
   C = corr(ymat_orig);
   C_reg = (1-lam_reg)*C + lam_reg*diag(max(0.01,diag(C))); % Ridge regularized covariance matrix
