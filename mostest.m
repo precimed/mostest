@@ -18,6 +18,8 @@ end
 
 if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
 
+tic
+
 if isempty(zmat_name)
   fprintf('Loading phenotype matrix from %s... ', pheno);
   ymat_df = readtable(pheno, 'Delimiter', 'tab');
@@ -101,6 +103,8 @@ else
   npheno=size(zmat_orig, 2);
 end
 
+gwas_time_sec = toc; tic
+
 fprintf('running MOSTest analysis...')
 ivec_snp_good = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
 
@@ -156,6 +160,11 @@ fprintf('Done.\n')
 fprintf('GWAS yield minP: %d; MOST: %d\n',sum(maxlogpvecs_corr(1,ivec_snp_good)>-log10(5e-8)),sum(logpdfvecs_corr(1,ivec_snp_good)>-log10(5e-8)));
 fprintf('%i\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t\n', npheno, cond(C0), pd_minpvecs.a, pd_minpvecs.b, pd_logpdfvecs.a, pd_logpdfvecs.b) 
 
+most_time_sec = toc;
+
+beta_params = [pd_minpvecs.a, pd_minpvecs.b]
+gamma_params = [pd_logpdfvecs.a, pd_logpdfvecs.b]
+
 minp_log10pval_orig = maxlogpvecs_corr(1, :);
 most_log10pval_orig = logpdfvecs_corr(1, :);
 minp_log10pval_perm = maxlogpvecs_corr(2, :);
@@ -167,7 +176,8 @@ save(fname, '-v7', ...
  'most_log10pval_perm', 'minp_log10pval_perm', ...
  'nvec', 'C0', 'C1', 'ivec_snp_good', ...
  'hv_maxlogpvecs', 'hv_logpdfvecs', 'hc_maxlogpvecs', ...
- 'chc_logpdfvecs', 'cdf_minpvecs', 'cdf_logpdfvecs');
+ 'chc_logpdfvecs', 'cdf_minpvecs', 'cdf_logpdfvecs', ...
+ 'beta_params', 'gamma_params', 'gwas_time_sec', 'most_time_sec');
 fprintf('Done.\n')
 
 fprintf('MOSTest analysis is completed.\n')
