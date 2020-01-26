@@ -66,7 +66,7 @@ if __name__ == '__main__':
             pval = np.power(10, -mat[test].flatten())
             df_zmat = pd.DataFrame(np.transpose(zmat_orig[:, pval<5e-08]), columns=measures)
             df_zmat.insert(0, 'SNP', bim.SNP.values[pval<5e-08])
-            df_zmat.to_csv(out + test.replace('_log10pval', '') + '.zmat.csv', index=False, sep='\t')
+            df_zmat.to_csv(out + "_" + test.replace('_log10pval', '') + '.zmat.csv', index=False, sep='\t')
 
         # save individual GWAS results ('freqvec' is an indivator that we've saved individual GWAS beta's)
         if 'freqvec' in h5file:
