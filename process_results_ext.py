@@ -24,6 +24,7 @@ if __name__ == '__main__':
     del bim['GP']
 
     mat = sio.loadmat(fname + '.mat')
+    bim['N'] = mat['nvec']
 
     # save matrix of z scores for SNPs passing 5e-08 threshold
     print('Generate {}_***.zmat.csv files...'.format(out))
