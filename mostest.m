@@ -113,6 +113,7 @@ ivec_snp_good = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
 if use_pheno_corr
   % use correlation structure of the phenotypes
   C0 = ymat_corr;
+  C1 = ymat_corr;
 else
   % use correlation structure of the z scores, calculated under permutation
   % we don't weight SNPs by LD because the permutation scheme breaks the LD structure
