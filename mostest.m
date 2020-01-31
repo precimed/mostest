@@ -5,6 +5,7 @@ if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;
 if ~exist('zmat_name', 'var'), zmat_name = ''; end;
 if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical correlation analysis
 if ~exist('apply_int', 'var'), apply_int = true; end;       % apply rank-based inverse normal transform
+if ~exist('use_pheno_corr', 'var'), use_pheno_corr = false; end;  % use correlation structure of the phenotypes
 
 % required input
 if ~exist('out', 'var'),   error('out file prefix is required'); end
@@ -47,6 +48,8 @@ if isempty(zmat_name)
   C_inv = inv(C_reg);
   W_wht = chol(C_inv); % Whitening filter
   ymat = ymat_orig*W_wht'; % Whitened residualized data
+
+  ymat_corr = corr(ymat);
 
   fprintf('Perform GWAS on %s (%i SNPs are expected)...\n', bfile, snps)
   zmat_orig=zeros(snps, npheno, 'single');
@@ -92,7 +95,7 @@ if isempty(zmat_name)
 
   fname = sprintf('%s_zmat.mat', out);
   fprintf('saving %s as -v7.3... ', fname);
-  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'beta_orig', 'beta_perm', 'measures', 'nvec', 'zvec_cca', 'freqvec');
+  save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'beta_orig', 'beta_perm', 'measures', 'nvec', 'zvec_cca', 'freqvec', 'ymat_corr');
   fprintf('OK.\n')
 else
   fprintf('loading %s... ', zmat_name);
@@ -107,15 +110,20 @@ gwas_time_sec = toc; tic
 fprintf('running MOSTest analysis...')
 ivec_snp_good = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
 
-% we don't weight SNPs in calculations of the z-score correlation structure,
-% because this is estimated under permutations that break LD structure
-snps_weight_values = ones(size(zmat_perm, 1), 1);
+if use_pheno_corr
+  % use correlation structure of the phenotypes
+  C0 = ymat_corr;
+else
+  % use correlation structure of the z scores, calculated under permutation
+  % we don't weight SNPs by LD because the permutation scheme breaks the LD structure
+  snps_weight_values = ones(size(zmat_perm, 1), 1);
 
-% correlation structure of the null z scores
-C0 = weightedcorrs(zmat_perm(ivec_snp_good, :), snps_weight_values(ivec_snp_good));
+  % correlation structure of the null z scores
+  C0 = weightedcorrs(zmat_perm(ivec_snp_good, :), snps_weight_values(ivec_snp_good));
 
-% correlation structure of the real z scores
-C1 = weightedcorrs(zmat_orig(ivec_snp_good, :), snps_weight_values(ivec_snp_good)); % & Hvec>0.1 & CRvec>0.95 & max(abs(zmat(:,:,1)),[],1)>abs(norminv(1e-5))),1)');
+  % correlation structure of the real z scores
+  C1 = weightedcorrs(zmat_orig(ivec_snp_good, :), snps_weight_values(ivec_snp_good)); % & Hvec>0.1 & CRvec>0.95 & max(abs(zmat(:,:,1)),[],1)>abs(norminv(1e-5))),1)');
+end
 
 [U S]  = svd(C0); s = diag(S);
 
