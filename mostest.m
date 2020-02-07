@@ -16,7 +16,7 @@ if isempty(zmat_name)
   if ~exist('nsubj', 'var'), error('number of subjects in --bfile and pheno files must be specified as "nsubj" parameter'); end
 end
 
-if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
+if exist('Shuffle.mexa64') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
 
 tic
 

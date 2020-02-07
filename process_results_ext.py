@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 import h5py
 import sys
+import os
 
 if __name__ == '__main__':
     if len(sys.argv) <= 2:
@@ -44,17 +45,17 @@ if __name__ == '__main__':
 
             beta_orig = np.array(h5file['beta_orig'])
             se_orig = np.divide(beta_orig, zmat_orig)
-            pval_orig = stats.norm.sf(np.abs(zmat_orig))*2.0
+            #pval_orig = stats.norm.sf(np.abs(zmat_orig))*2.0
 
             for measure_index, measure in enumerate(measures):
                 fname = '{}.{}.orig.sumstats.gz'.format(out, measure)
                 print('Generate {}...'.format(fname))
-                bim['PVAL'] = np.transpose(pval_orig[measure_index, :])
-                bim['Z'] = np.transpose(zmat_orig[measure_index, :])
+                #bim['PVAL'] = np.transpose(pval_orig[measure_index, :])
+                #bim['Z'] = np.transpose(zmat_orig[measure_index, :])
                 bim['BETA'] = np.transpose(beta_orig[measure_index, :])
                 bim['SE'] = np.transpose(se_orig[measure_index, :])
-                bim.to_csv(fname, compression='gzip', sep='\t', index=False)
-            del zmat_orig; del beta_orig; del se_orig; del pval_orig
+                bim["SNP A1 A2 N FRQ BETA SE".split()].to_csv(fname,  sep='\t', index=False)
+            del zmat_orig; del beta_orig; del se_orig; #del pval_orig
 
             beta_perm = np.array(h5file['beta_perm'])
             zmat_perm = np.array(h5file['zmat_perm'])
@@ -63,11 +64,14 @@ if __name__ == '__main__':
             for measure_index, measure in enumerate(measures):
                 fname = '{}.{}.perm.sumstats.gz'.format(out, measure)
                 print('Generate {}...'.format(fname))
-                bim['PVAL'] = np.transpose(pval_perm[measure_index, :])
-                bim['Z'] = np.transpose(zmat_perm[measure_index, :])
+                #bim['PVAL'] = np.transpose(pval_perm[measure_index, :])
+                #bim['Z'] = np.transpose(zmat_perm[measure_index, :])
                 bim['BETA'] = np.transpose(beta_perm[measure_index, :])
                 bim['SE'] = np.transpose(se_perm[measure_index, :])
-                bim.to_csv(fname, compression='gzip', sep='\t', index=False)
-
+                bim["SNP A1 A2 N FRQ BETA SE".split()].to_csv(fname,  sep='\t', index=False)
+    
+    command = 'ls {out}.*.sumstats | parallel -j16 -i gzip {{}}'.format(out=out)
+    print(command) 
+    os.system(command)
     print('Done.')
 
