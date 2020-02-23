@@ -18,7 +18,7 @@ Since MATLAB and Python are cross-platform we expect MOSTest to run well on Wind
 
 ## Install MOSTest
 
-To install MOSTest you simply download or git fetch this repository (https://github.com/precimed/mostests) into an empty folder (which we refer to as `<MOST_ROOT>`),
+To install MOSTest you simply download or git fetch this repository (https://github.com/precimed/mostest) into an empty folder (which we refer to as `<MOST_ROOT>`),
 
 ## Data preparation
 
