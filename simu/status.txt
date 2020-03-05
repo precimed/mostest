@@ -1,0 +1,430 @@
+num_eigval_to_regularize=0; 39  135.84  0.925   24.794  19.682  1.982
+num_eigval_to_regularize=1; 39  135.84  0.925   24.794  19.631  1.974   
+num_eigval_to_regularize=2; 39  135.84  0.925   24.794  19.562  1.964   
+num_eigval_to_regularize=5; 39  135.84  0.925   24.794  19.086  1.930   
+num_eigval_to_regularize=10;39  135.84  0.925   24.794  18.595  1.871
+num_eigval_to_regularize=20;39  135.84  0.925   24.794  16.549  1.718   
+num_eigval_to_regularize=30;39  135.84  0.925   24.794  14.303  1.481
+
+68      2915667.00      0.952   57.244  28.435  2.522   # no regularization;   that is due to very heavy tails.
+68      1019.64         0.951   57.240  33.909  2.005   # qinv
+68      3019194.75      0.945   57.534  32.992  1.980   # numeig=5, -1 degree of freedom
+
+
+pheno='/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/SubcorticalVolume_aseg35.csv';
+bfile='/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/UKB26502_QCed_230519_maf0p005_chr21';snps=102079;nsubj=26502;
+out='/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/simu/SubcorticalVolume_aseg35_chr21';
+
+
+library(MultiPhen)
+pheno.opts = mPhen.options("pheno.input")
+pheno = mPhen.readPhenoFiles("SubcorticalVolume_aseg35_iid.csv", opts = pheno.opts)
+ 
+opts = mPhen.options("regression")
+phenoObject = mPhen.preparePheno(pheno,opts = opts)
+
+geno.opts = mPhen.options("geno.input")
+opts = mPhen.options("regression")
+geno.opts$mPhen.batch = 10
+geno.opts$mPhen.format = "GT"
+genoConnection <-mPhen.readGenotypes("UKB26502_QCed_230519_maf0p005_chr21", opts = geno.opts, indiv = rownames(pheno$pheno))
+geno <-genoConnection$genoData
+dimg = dim(geno)
+ 
+resultsJoint = mPhen.assoc(geno, phenoObject, opts = opts)
+
+pheno='/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/CorticalArea_hemicomb.csv';
+out = '/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/investigate_int/CorticalArea_hemicomb';
+bfile='/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/UKB26502_QCed_230519_maf0p005_chr21';snps=102079;nsubj=26502;
+apply_int=0;num_eigval_to_regularize=0;mostest
+~/miniconda3/bin/python process_results.py /oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/UKB26502_QCed_230519_maf0p005_chr21.bim /oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/investigate_int/CorticalArea_hemicomb
+
+
+pheno='/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/simu/run13/simu_rep1_phenoALL.csv';
+out = '/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/simu/run13/simu_rep1_phenoALL_qnorm_numeig300';
+bfile='/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/UKB26502_QCed_230519_maf0p005_chr21';snps=102079;nsubj=26502;
+apply_int=1;num_eigval_to_regularize=300;mostest
+~/miniconda3/bin/python process_results.py /oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/UKB26502_QCed_230519_maf0p005_chr21.bim /oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/simu/run13/simu_rep1_phenoALL_qnorm_numeig300
+
+
+
+~/miniconda3/bin/python process_results.py /oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/UKB26502_QCed_230519_maf0p005_chr21.bim /oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/simu/SubcorticalVolume_aseg35_chr21
+
+
+
+snps_weight = '/home/oleksanf/vmshare/data/UKBDATA/genotypes/imputed/UKB26502_QCed_230519_maf0p005_chr21.randprune_n64_p10.csv';
+bfile='/home/oleksanf/vmshare/data/UKBDATA/genotypes/imputed/UKB26502_QCed_230519_maf0p005_chr21';
+pheno='/home/oleksanf/vmshare/data/most_laptop/SubcorticalVolume.csv';
+out='/home/oleksanf/vmshare/data/most_laptop/save_beta_dev/SubcorticalVolume';
+snps=102079;nsubj=26502;
+
+zmat_name='/home/oleksanf/vmshare/data/most_laptop/save_beta_dev/SubcorticalVolume_zmat.mat';
+out='/home/oleksanf/vmshare/data/most_laptop/save_beta_dev/SubcorticalVolume';
+
+
+python process_results.py /home/oleksanf/vmshare/data/UKBDATA/genotypes/imputed/UKB26502_QCed_230519_maf0p005_chr21.bim /home/oleksanf/vmshare/data/most_laptop/save_beta_dev/SubcorticalVolume
+
+
+
+load('/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/MultiABEL/indep.snps.RData')
+
+data <- load.summary(c('SubcorticalVolume_aseg35_chr21.Brain_Stem.orig.sumstats.gz', 'SubcorticalVolume_aseg35_chr21.CC_Anterior.orig.sumstats.gz'), columnNames = c("SNP", "A1", "A2", "FRQ", "BETA", "SE", "N"), indep.snps = indep.snps)
+
+
+lapply(indep.snps, write, "indep.snps.txt", append=FALSE)
+
+
+
+load('indep.snps.RData')
+write.table(data.frame(indep.snps), file="indep.snps.txt", row.names=F, col.names=F, quote=F)
+
+
+
+
+
+data <- load.summary(Sys.glob("/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/simu/run3/simu_rep1_phenoALL*orig*gz"), columnNames = c("SNP", "A1", "A2", "FRQ", "BETA", "SE", "N"), indep.snps = indep.snps)
+result <- MultiSummary(data)
+write.table(result$scan, "/oasis/projects/nsf/csd604/oleksanf/UKBDATA/projects/mostest_ukb/simu/run3/simu_rep1_phenoALL.MultiAbel.orig.csv", sep='\t', row.names=FALSE, quote=FALSE)
+
+data <- load.summary(Sys.glob("*perm*gz"), columnNames = c("SNP", "A1", "A2", "FRQ", "BETA", "SE", "N"), indep.snps = indep.snps)
+result <- MultiSummary(data)
+write.table(result$scan, "SubcorticalVolume_aseg35_chr21.MultiAbel.perm.csv", sep='\t', row.names=FALSE, quote=FALSE)
+
+.libPaths("/home/oleksanf/R/site-library/")
+require(MultiABEL)
+
+
+python ~/github/python_convert/qq.py simu_rep1_phenoALL.MultiAbel.perm.csv --out simu_rep1_phenoALL.MultiAbel.perm.png --p p --snp marker &
+python ~/github/python_convert/qq.py simu_rep1_phenoALL.MultiAbel.orig.csv --out simu_rep1_phenoALL.MultiAbel.orig.png --p p --snp marker &
+python ~/github/python_convert/qq.py simu_rep1_phenoALL.most_orig.sumstats --out simu_rep1_phenoALL.most_orig.png &
+python ~/github/python_convert/qq.py simu_rep1_phenoALL.minp_orig.sumstats --out simu_rep1_phenoALL.minp_orig.png &
+python ~/github/python_convert/qq.py simu_rep1_phenoALL.most_perm.sumstats --out simu_rep1_phenoALL.most_perm.png &
+python ~/github/python_convert/qq.py simu_rep1_phenoALL.minp_perm.sumstats --out simu_rep1_phenoALL.minp_perm.png &
+
+
+
+ls *sumstats | parallel -j16 python ~/github/python_convert/qq.py {} --out {}.qq.png
+ls *sumstats | parallel -j16 python ~/github/python_convert/manhattan.py {} --downsample-frac 1 --out {}.manh.png
+
+
+
+import precimed
+import precimed.mixer
+import precimed.mixer.libbgmg
+import pandas as pd
+
+trait1_file=''; trait2_file=''; exclude=''; extract='';frq_file='';
+chr_label = -1  # -1 have a special meaning: it handles the case when ldfile contains information for all chromosomes
+ldfile='/space/gwas-syn1/1/data/GWAS/UKBioBank/users/oleksanf/MOSTest_analysis/UKB26502_QCed_230519_maf0p005.run1.ld'
+bim_file='/space/gwas-syn1/1/data/GWAS/UKBioBank/users/oleksanf/MOSTest_analysis/UKB26502_QCed_230519_maf0p005.bim'
+log_file='/space/gwas-syn1/1/data/GWAS/UKBioBank/users/oleksanf/MOSTest_analysis/UKB26502_QCed_230519_maf0p005.randprune.log'
+libbgmg_so='/home/oleksandr/github/mixer/src/build/lib/libbgmg.so'
+
+
+libbgmg = precimed.mixer.libbgmg.LibBgmg(libbgmg_so, dispose=True, init_log=log_file)
+libbgmg.init(bim_file, frq_file, [chr_label], trait1_file, trait2_file, exclude, extract)
+libbgmg.set_ld_r2_coo_from_file(chr_label, ldfile)
+libbgmg.set_ld_r2_csr(chr_label)
+libbgmg.set_weights_randprune(64, 0.1)
+weights_n64_p10 = libbgmg.weights
+
+libbgmg.set_weights_randprune(1, 0.1)
+weights_n01_p10 = libbgmg.weights
+
+libbgmg.set_option('diag', 0)
+
+bim = pd.read_table(bim_file, delim_whitespace=True, header=None, names='CHR SNP GP BP A1 A2'.split())
+bim['weights_n64_p10'] = weights_n64_p10
+bim['weights_n01_p10'] = weights_n01_p10
+bim.to_csv('/space/gwas-syn1/1/data/GWAS/UKBioBank/users/oleksanf/MOSTest_analysis/UKB26502_QCed_230519_maf0p005.randprune.csv', index=False, sep='\t')
+
+for col in ['weights_n64_p10', 'weights_n01_p10']: bim[[col]].rename(columns={col:'weights'}).to_csv('/space/gwas-syn1/1/data/GWAS/UKBioBank/users/oleksanf/MOSTest_analysis/UKB26502_QCed_230519_maf0p005.{}.csv'.format(col).replace('weights', 'randprune'), index=False, sep='\t')
+
+for col in ['weights_n64_p10', 'weights_n01_p10']: bim[bim.CHR==21][[ col]].rename(columns={col:'weights'}).to_csv('/space/gwas-syn1/1/data/GWAS/UKBioBank/users/oleksanf/MOSTest_analysis/UKB26502_QCed_230519_maf0p005_chr21.{}.csv'.format(col).replace('weights', 'randprune'), index=False, sep='\t')
+
+
+mostest_simu.py --T 35 --t 35 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep 1 --keep-temp-files
+
+
+
+# test scenarios where inverse normal transformation and regularization are important - combining features, and passing via non-linear transformation
+# [none prod sum] x [exp id] x [int noint] .
+
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb sum --link exp --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb prod --link exp --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link exp --rep {0..9} --int --eig 0 10 20 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb sum --link id --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb prod --link id --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 10 20 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb sum --link exp --rep {0..9}       --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb prod --link exp --rep {0..9}      --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link exp --rep {0..9}      --eig 0 10 20 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb sum --link id --rep {0..9}       --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb prod --link id --rep {0..9}      --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9}      --eig 0 10 20 &
+
+# futher test with/without correlation
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re eye --h2 0.004 --comb sum --link exp --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re eye --h2 0.004 --comb prod --link exp --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re eye --h2 0.004 --comb none --link exp --rep {0..9} --int --eig 0 10 20 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 10 20 &
+
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re real --h2 0.004 --comb sum --link exp --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re real --h2 0.004 --comb prod --link exp --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re real --h2 0.004 --comb none --link exp --rep {0..9} --int --eig 0 10 20 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re real --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 10 20 &
+
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re real --h2 0.004 --comb sum --link exp --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re real --h2 0.004 --comb prod --link exp --rep {0..9} --int --eig 0 100 275 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re real --h2 0.004 --comb none --link exp --rep {0..9} --int --eig 0 10 20 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg real --re real --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 10 20 &
+
+# TBD: test eye  vs real correaltions in larger matrices (171, 68, 39).
+
+# in what follows, we always apply int, don't use "exp", don't use "comb", and don't use correlations, and don't use regularization
+# therefore, what's left is to try different T, t, dist, h2
+ 
+python mostest_simu.py --T 25 --t 1 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 25 --t 5 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 25 --t 10 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 25 --t 15 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 25 --t 20 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 25 --t 25 --nc 100 --dist cauchy --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+
+python mostest_simu.py --T 50 --t 1 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 50 --t 10 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 50 --t 20 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 50 --t 30 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 50 --t 40 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 50 --t 50 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+python mostest_simu.py --T 50 --t 50 --nc 100 --dist cauchy --rg eye --re eye --h2 0.004 --comb none --link id --rep {0..9} --int --eig 0 &
+
+
+
+
+
+dim = 20
+x=randn(26502, dim);
+x=exp(x);
+for i = 1:dim, for j = (i+1):dim, x(:, end+1) = x(:, i) .* x(:, j); end; end
+cond(corr(x))
+[mean(kurtosis(x)) max(kurtosis(x))]
+
+for i = 1:size(x, 2), [F, X] = ecdf(x(:, i)); F=transpose(F(2:end)); X=transpose(X(2:end)); x(:, i) = norminv(interp1(X,F,x(:, i),'nearest') - 0.5 / size(x, 1)); end;
+cond(corr(x))
+[mean(kurtosis(x)) max(kurtosis(x))]
+
+
+import pandas as pd
+import numpy as np
+ts=[0.05, 0.01, 1e-4, 1e-6, 5e-7, 5e-8]
+def count(values, thresholds):
+    return [np.sum(values<t)/len(values) for t in thresholds]
+
+basename = 'run16/simu_T=35_t=10_nc=100_dist=norm_rg=eye_re=real_h2=0.004_comb=none_link=id_rep=0'
+beta = pd.read_csv(basename + '_beta.csv',sep='\t',header=None,usecols=[0]).rename(columns={0:'SNP'})
+minp_orig = pd.read_csv(basename + '_pheno.csv.minp_orig.sumstats.gz',delim_whitespace=True)
+most_orig =  pd.read_csv( basename + '_pheno.csv.most_orig.sumstats.gz',delim_whitespace=True)
+abel_orig =  pd.read_csv(basename + '_pheno.csv.MultiABEL.orig.sumstats.gz',delim_whitespace=True)
+minp_perm = pd.read_csv(basename + '_pheno.csv.minp_perm.sumstats.gz',delim_whitespace=True)
+most_perm =  pd.read_csv( basename + '_pheno.csv.most_perm.sumstats.gz',delim_whitespace=True)
+abel_perm =  pd.read_csv(basename + '_pheno.csv.MultiABEL.perm.sumstats.gz',delim_whitespace=True)
+
+
+df = pd.DataFrame({'T':ts, 
+    'minp_orig_chr21':count(pd.merge(minp_orig, beta)['PVAL'],    ts),
+    'most_orig_chr21':count(pd.merge(most_orig, beta)['PVAL'],    ts),
+    'abel_orig_chr21':count(pd.merge(abel_orig, beta)['PVAL'],    ts),
+    'minp_orig_chr22':count(minp_orig[minp_orig.CHR==22]['PVAL'], ts),
+    'most_orig_chr22':count(most_orig[most_orig.CHR==22]['PVAL'], ts),
+    'abel_orig_chr22':count(abel_orig[abel_orig.CHR==22]['PVAL'], ts),
+    })
+df
+Wx
+
+
+
+.libPaths("/home/oleksanf/R/site-library/")
+library(MultiPhen)
+
+pheno.opts = mPhen.options("pheno.input")
+pheno = mPhen.readPhenoFiles("SubcorticalVolume_aseg35_iid.csv", opts = pheno.opts)
+
+opts = mPhen.options("regression")
+opts$mPhen.onlyShowJoin=TRUE
+phenoObject = mPhen.preparePheno(pheno,opts = opts)
+numPhenos = length(phenoObject$phenN)
+
+geno.opts = mPhen.options("geno.input")
+geno.opts$mPhen.batch = 10
+geno.opts$mPhen.format = "GT"
+geno.opts$mPhen.rsidToDo = c("rs28973171", "rs28845812", "rs28972010", "rs28384329", "rs28521368")
+genoConnection <-mPhen.readGenotypes("UKB26502_QCed_230519_maf0p005_chr21", opts = geno.opts, indiv = rownames(pheno$pheno))
+geno <-genoConnection$genoData
+dimg = dim(geno)
+
+
+
+geno.opts$mPhen.rsidToDo = c("21_10779981", "21_10802538")
+
+resultsJoint = mPhen.assoc(geno, phenoObject, opts = opts)
+length(resultsJoint$Res[,,numPhenos+1,2])
+resultsJoint$Res[,,numPhenos+1,2]
+
+
+resDir = "mPhenResultsDir"
+towrite = list(long.txt = TRUE, wide.txt = TRUE)
+toplot = list(.manh = TRUE,.qq = TRUE,.heatm = TRUE, .fprint = TRUE)
+plotopts = mPhen.options("plot")
+output=mPhen.writeOutput(resultsJoint,output=resDir, geno = geno, towrite = towrite, toplot = toplot, opts = plotopts)
+ 
+
+
+
+
+.libPaths("/space/syn03/1/data/oleksandr/R/site-library/")
+
+install.packages("devtools")
+install.packages("abind")
+install.packages("epitools")
+install.packages("meta")
+install.packages("HardyWeinberg")
+
+install.packages("RColorBrewer")
+install.packages("gplots")
+
+
+install_github("xiashen/MultiABEL")
+install_github("lachlancoin/MultiPhen")
+
+
+
+
+
+
+
+
+
+bash
+cd ~/precimed/ofrei_workflows/mostest_simu/
+
+5-6 hours per 6 runs per node.
+
+[NEW] means after I re-design sumstats.gz features. Need to see if those work fine.
+
+Mon
+command_chrALL_aa.sh    submitted 580232 at mmilcluster8        simu_T=2_t=2_nc=100_dist=norm_rg=eye_re=eye_h2=0.04_comb=none_link=id_int=True_rep=0.log - crashed in QQ plots after mPhen? 
+[crashed]                                                       No .table results.  (mmil-compute-8-1.local)
+                                                               Adjust -j12. Remove previous results. Re-run!
+                        submitted 580234 at mmilcluster8        simu_T=2_t=2_nc=100_dist=norm_rg=eye_re=eye_h2=0.04_comb=none_link=id_int=True_rep=0.log   - on  mmil-compute-8-18.local 
+
+command_chrALL_ab.sh    1088482 at mmilcluster7                 simu_T=2_t=2_nc=100_dist=norm_rg=eye_re=eye_h2=0.0004_comb=none_link=id_int=True_rep=4.log - no results yet, running (7-4 - ok)
+[crashed]                                                       simu_T=5_t=5_nc=100_dist=norm_rg=eye_re=eye_h2=0.04_comb=none_link=id_int=True_rep=0.log  # not started
+
+command_chrALL_ac.sh    3910605 at mmilcluster6                 simu_T=5_t=5_nc=100_dist=norm_rg=eye_re=eye_h2=0.0004_comb=none_link=id_int=True_rep=0.log   - got first 6, still running (6-2 - ok) 
+[crashed]
+
+command_chrALL_ad.sh    511253 at mmilcluster5                  simu_T=10_t=10_nc=100_dist=norm_rg=eye_re=eye_h2=0.004_comb=none_link=id_int=True_rep=2.log    -  crashed after 6 tasks, needs a restart.
+                        511336 at mmilcluster5                  simu_T=10_t=10_nc=100_dist=norm_rg=eye_re=eye_h2=0.004_comb=none_link=id_int=True_rep=8.log  (mmil-compute-5-14.local)   - crashed
+[RUNNING]               [NEW] 1088813 at mmilcluster7                 simu_T=10_t=10_nc=100_dist=norm_rg=eye_re=eye_h2=0.0004_comb=none_link=id_int=True_rep=4.log           all.q@mmil-compute-7-5.local 
+
+command_chrALL_ae.sh    511337 at mmilcluster5                  simu_T=20_t=20_nc=100_dist=norm_rg=eye_re=eye_h2=0.04_comb=none_link=id_int=True_rep=6.log      (mmil-compute-5-6.local)  -  crashed
+[RUNNING]                                                        simu_T=20_t=20_nc=100_dist=norm_rg=eye_re=eye_h2=0.004_comb=none_link=id_int=True_rep=2.log   - running
+
+                        [NEW] 3911143 at mmilcluster6 - mmil-compute-6-6.loca 
+
+
+
+
+command_chrALL_af.sh    3910820 at mmilcluster6                 simu_T=50_t=50_nc=100_dist=norm_rg=eye_re=eye_h2=0.04_comb=none_link=id_int=True_rep=0.log    mmil-compute-6-3.loca      - crashed 
+
+command_chrALL_ag.sh    1088711 at mmilcluster7                 simu_T=50_t=50_nc=100_dist=norm_rg=eye_re=eye_h2=0.0004_comb=none_link=id_int=True_rep=4.log    mmil-compute-7-8.local   - crashed
+
+command_chrALL_ah.sh    580235 at mmilcluster8                  simu_T=100_t=100_nc=100_dist=norm_rg=eye_re=eye_h2=0.004_comb=none_link=id_int=True_rep=8.log   mmil-compute-8-9.local   - crashed
+
+
+All running.
+================================
+command_chrALL_aa.sh    1089262 at c7 
+command_chrALL_ab.sh    1089260 at c7 
+command_chrALL_ac.sh    1089263 at c7 - DONE!
+command_chrALL_ad.sh    1088813 at c7 
+command_chrALL_ae.sh    3911143 at c6 <- that's cluster6
+command_chrALL_af.sh    1089270 at c7 
+command_chrALL_ag.sh    1089271 at c7 
+command_chrALL_ah.sh    1089272 at c7 
+
+command_chrALL_ai.sh    3911425 at c6
+command_chrALL_aj.sh    3911426 at c6
+command_chrALL_ak.sh    3911427 at c6
+command_chrALL_al.sh    3911428 at c6
+command_chrALL_am.sh    3911429 at c6
+
+command_chrALL_an.sh    512850 at c5
+command_chrALL_ao.sh    512851 at c5
+command_chrALL_ap.sh    512934 at c5
+command_chrALL_aq.sh    512935 at c5
+command_chrALL_ar.sh    512936 at c5
+command_chrALL_as.sh    512938 at c5
+command_chrALL_at.sh    512940 at c5
+
+command_chrALL_au.sh    589374 at c8
+command_chrALL_av.sh    589367 at c8
+command_chrALL_aw.sh    589368 at c8    
+command_chrALL_ax.sh    589369 at c8
+command_chrALL_ay.sh    589370 at c8
+command_chrALL_az.sh    589371 at c8
+command_chrALL_ba.sh    589372 at c8
+command_chrALL_bb.sh    589373 at c8
+
+
+# 21-22 simulations, cluster 8
+command_aa.sh   589360    589354    all.q@mmil-compute-8-13.local  
+command_ab.sh   589361          589353   all.q@mmil-compute-8-10.local
+command_ac.sh   589362                  589352   all.q@mmil-compute-8-5.local   
+command_ad.sh   589363                  589351    all.q@mmil-compute-8-8.local  
+command_ae.sh   589364          589350         all.q@mmil-compute-8-7.local 
+command_af.sh   589365                  589349           all.q@mmil-compute-8-17.local  
+command_ag.sh   589366                  589348          all.q@mmil-compute-8-19.local           simu_T=25_t=25_nc=1000_dist=norm_rg=eye_re=eye_h2=0.04_comb=none_link=id_int=True_rep=5.log 
+
+bash && ~/miniconda3/bin/python3 /home/oleksandr/precimed/ofrei_workflows/mostest_simu/mostest_simu.py --T 25 --t 25 --nc 1000 --dist norm --rg eye --re eye --h2 0.04 --comb none --link id --rep 5 --int --eig 0 --real-pheno /space/gwas-syn1/1/data/GWAS/UKBioBank/projects/mostest_ukb/SubcorticalVolume_aseg35.csv --out-prefix /space/gwas-syn1/1/data/GWAS/UKBioBank/projects/mostest_ukb/simu/run22/simu
+
+
+bash && ~/miniconda3/bin/python3 /home/oleksandr/precimed/ofrei_workflows/mostest_simu/mostest_simu_chrALL.py --T 100 --t 100 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep 8 --int --eig 0 --real-pheno /space/gwas-syn1/1/data/GWAS/UKBioBank/projects/mostest_ukb/SubcorticalVolume_aseg35.csv --out-prefix /space/gwas-syn1/1/data/GWAS/UKBioBank/projects/mostest_ukb/simu/run23/simu
+simu_T=100_t=100_nc=100_dist=norm_rg=eye_re=eye_h2=0.004_comb=none_link=id_int=True_rep=8.log 
+
+
+28 jobs in total -  I can run all of them in parallel.
+24 jobs / scr
+1 job = 24 hours.
+
+
+
+
+bash && ~/miniconda3/bin/python3 /home/oleksandr/precimed/ofrei_workflows/mostest_simu/mostest_simu_chrALL.py --T 20 --t 20 --nc 100 --dist norm --rg eye --re eye --h2 0.004 --comb none --link id --rep 2 --int --eig 0 --real-pheno /space/gwas-syn1/1/data/GWAS/UKBioBank/projects/mostest_ukb/SubcorticalVolume_aseg35.csv --out-prefix /space/gwas-syn1/1/data/GWAS/UKBioBank/projects/mostest_ukb/simu/run23/simu
+
+
+
+2 sockets
+Intel(R) Xeon(R) CPU E5-2650 v4 @ 2.20GHz
+
+
+ls *sh.e* | parallel -j1 echo "echo {} \&\& cat {} \| grep simuV2_T=25_t=25_nc=100_dist=norm_rg=eye_re=eye_h2=0.004_comb=sum_link=id_int=False_rep=0" | bash
+
+
+rep=0 mmilcluster8
+rep=1 mmilcluster7
+rep=2 mmilcluster6  - crashed,
+rep=3 mmilcluster5
+rep=4 mmilcluster6  
+
+
+[oleksandr@ip24 run30]$ ls *rep=0* | wc -l	2238
+[oleksandr@ip24 run30]$ ls *rep=1* | wc -l	1247
+[oleksandr@ip24 run30]$ ls *rep=3* | wc -l	2148
+[oleksandr@ip24 run30]$ ls *rep=4* | wc -l	2224
+
+
+
+
