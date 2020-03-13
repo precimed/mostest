@@ -16,7 +16,7 @@ if isempty(zmat_name)
   if ~exist('nsubj', 'var'), nsubj=nan; end;
 end
 
-%if (exist('Shuffle') ~= 3), mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
+if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
 
 tic
 
