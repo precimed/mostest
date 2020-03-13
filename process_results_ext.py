@@ -13,11 +13,15 @@ if __name__ == '__main__':
         print(' bim   - path to bim file (reference set of SNPs')
         print(' fname - prefix of .mat files output by mostest.m, ie. fname should be the same as "out" argument of the mostest.m')
         print(' out   - optional suffix for output files, by defautl fname will be used')
+        print(' mode  - "orig" to export non-permuted summary stats; "perm" for permuted')
         sys.exit()
 
     bim_file = sys.argv[1] #'UKB26502_QCed_230519_maf0p005_chr21.bim'
     fname = sys.argv[2]    # 'all_chr21'
     out = sys.argv[3] if (len(sys.argv) > 3) else sys.argv[2]
+    mode = sys.argv[4] if (len(sys.argv) > 4) else 'orig'
+
+    if mode not in ['orig', 'perm']: print('unknown mode, check 4th argument'); sys.exit()
 
     # read .bim file (reference set of SNPs)
     print('Load {}...'.format(bim_file))
@@ -48,6 +52,7 @@ if __name__ == '__main__':
             #pval_orig = stats.norm.sf(np.abs(zmat_orig))*2.0
 
             for measure_index, measure in enumerate(measures):
+                if mode != 'orig': break
                 fname = '{}.{}.orig.sumstats.gz'.format(out, measure)
                 print('Generate {}...'.format(fname))
                 #bim['PVAL'] = np.transpose(pval_orig[measure_index, :])
@@ -62,6 +67,7 @@ if __name__ == '__main__':
             se_perm = np.divide(beta_perm, zmat_perm)
             pval_perm = stats.norm.sf(np.abs(zmat_perm))*2.0
             for measure_index, measure in enumerate(measures):
+                if mode=='orig': break
                 fname = '{}.{}.perm.sumstats.gz'.format(out, measure)
                 print('Generate {}...'.format(fname))
                 #bim['PVAL'] = np.transpose(pval_perm[measure_index, :])
@@ -69,9 +75,5 @@ if __name__ == '__main__':
                 bim['BETA'] = np.transpose(beta_perm[measure_index, :])
                 bim['SE'] = np.transpose(se_perm[measure_index, :])
                 bim["SNP A1 A2 N FRQ BETA SE".split()].to_csv(fname,  sep='\t', index=False)
-    
-    command = 'ls {out}.*.sumstats | parallel -j16 -i gzip {{}}'.format(out=out)
-    print(command) 
-    os.system(command)
     print('Done.')
 
