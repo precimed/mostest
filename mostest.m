@@ -12,22 +12,49 @@ if ~exist('out', 'var'),   error('out file prefix is required'); end
 if isempty(zmat_name)
   if ~exist('pheno', 'var'), error('pheno file is required'); end
   if ~exist('bfile', 'var'), error('bfile is required'); end
-  if ~exist('snps', 'var'),  error('number of SNPs in --bfile must be specified as "snps" parameter'); end
-  if ~exist('nsubj', 'var'), error('number of subjects in --bfile and pheno files must be specified as "nsubj" parameter'); end
+  if ~exist('snps', 'var'), snps=nan; end; 
+  if ~exist('nsubj', 'var'), nsubj=nan; end;
 end
 
-if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
+%if (exist('Shuffle') ~= 3), mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
 
 tic
 
 if isempty(zmat_name)
+
+  fileID = fopen(sprintf('%s.bim', bfile));
+  bim_file = textscan(fileID,'%s %s %s %s %s %s');
+  fclose(fileID);
+  if isfinite(snps) && (snps ~= length(bim_file{1})), error('snps=%i is incompatible with .bim file; please check your snps parameter (or remove it to auto-detect #snps)', snps);end
+  snps=length(bim_file{1});
+
+  fileID = fopen(sprintf('%s.fam', bfile));
+  fam_file = textscan(fileID,'%s %s %s %s %s %s');
+  fclose(fileID);
+  if isfinite(nsubj) && (nsubj ~= length(fam_file{1})), error('nsubj=%i is incompatible with .fam file; please check your snps parameter (or remove it to auto-detect nsubj)', nsubj);end
+  nsubj=length(fam_file{1});
+
+  fprintf('%i snps and %i subjects detected in bfile\n', snps, nsubj);
+
   fprintf('Loading phenotype matrix from %s... ', pheno);
-  ymat_df = readtable(pheno, 'Delimiter', 'tab');
-  measures = ymat_df.Properties.VariableNames;
-  ymat_orig = table2array(ymat_df);
+  if 1 
+      ymat_df = readtable(pheno, 'Delimiter', 'tab','HeaderLines',0);
+      measures = ymat_df.Properties.VariableNames;
+      ymat_orig = table2array(ymat_df);
+  else
+      ymat_orig=dlmread(pheno); ymat_orig=ymat_orig(:, 2:end);
+      measures = cell(size(ymat_orig, 2), 1);
+      for i=1:length(measures), measures{i} = sprintf('V%i', i); end;
+  end
   npheno=size(ymat_orig, 2);
   fprintf('Done, %i phenotypes found\n', npheno);
   if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, while nsubj argument is specified as %i. These must be consistent.', size(ymat_orig, 1), nsubj); end;
+
+  keep = (min(ymat_orig)~=max(ymat_orig));
+  fprintf('Remove %i phenotypes (no variation)\n', length(keep) - sum(keep));
+  ymat_orig = ymat_orig(:, keep);
+  measures = measures(keep);
+  npheno=size(ymat_orig, 2);
 
   % perform rank-based inverse normal transform, equivalently to the following R code:
   % DM[,f] <- qnorm(ecdf(DM[,f])(DM[,f]) - 0.5/dim(DM)[1])
