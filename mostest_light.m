@@ -3,6 +3,7 @@ if ~exist('chunk', 'var'), chunk = 10000; end;
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
 if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;  %  how many smallest eigenvalues of C0 matrix (z score correlation) to regularize
 if ~exist('apply_int', 'var'), apply_int = true; end;       % apply rank-based inverse normal transform
+if ~exist('meta_simu_num_cohors', 'var'), meta_simu_num_cohors = 1; end;  % number of cohorts to simulate meta-analysis
 
 % required input
 if ~exist('out', 'var'),   error('out file prefix is required'); end
@@ -43,6 +44,15 @@ end
 npheno=size(ymat_orig, 2);
 fprintf('Done, %i phenotypes found\n', npheno);
 if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, while nsubj argument is specified as %i. These must be consistent.', size(ymat_orig, 1), nsubj); end;
+
+if (meta_simu_num_cohors > 1)
+  p=rand(meta_simu_num_cohors, 1); p=p/sum(p); 
+  nsubj_per_cohort=mnrnd(nsubj, p, 1);
+  nsubj_per_cohort = nsubj_per_cohort(nsubj_per_cohort>=2);
+  meta_simu_num_cohors = length(nsubj_per_cohort);
+  fprintf('simulated distribution of subjects across %i meta-cohorts:\n', meta_simu_num_cohors);
+  disp(nsubj_per_cohort);
+end
 
 keep = (min(ymat_orig)~=max(ymat_orig));
 fprintf('Remove %i phenotypes (no variation)\n', length(keep) - sum(keep));
@@ -103,10 +113,35 @@ for i=1:chunk:snps
   fprintf('processing... ', i, j);   
   geno = nan(size(geno_int8), 'single'); for code = int8([0,1,2]), geno(geno_int8==code) = single(code); end;
 
-  shuffle_geno = Shuffle(geno);
-  [~, zmat_orig_chunk] = nancorr(ymat, geno);
-  [~, zmat_perm_chunk] = nancorr(ymat, shuffle_geno);
+  if meta_simu_num_cohors==1
+    shuffle_geno = Shuffle(geno);
+    [~, zmat_orig_chunk] = nancorr(ymat, geno);
+    [~, zmat_perm_chunk] = nancorr(ymat, shuffle_geno);
+  else
+    % experimental "what-if" scenario to validate MOSTest in a meta-analytical setting
+    zmat_orig_chunk = zeros(npheno, j-i+1);
+    zmat_perm_chunk = zeros(npheno, j-i+1);
 
+    subj_per_cohort_start = [1, 1+cumsum(nsubj_per_cohort(1:end-1))];
+    subj_per_cohort_end = cumsum(nsubj_per_cohort);
+    weight_per_cohort=sqrt(nsubj_per_cohort)/sqrt(sum(nsubj_per_cohort));
+
+
+    for meta_cohort = 1:meta_simu_num_cohors
+      subj_per_cohort_idx = subj_per_cohort_start(meta_cohort):subj_per_cohort_end(meta_cohort);
+      ymat_cohort = ymat(subj_per_cohort_idx, :);
+      geno_cohort = geno(subj_per_cohort_idx, :);
+      shuffle_geno_cohort = Shuffle(geno_cohort);
+
+
+      [~, zmat_orig_chunk_cohort] = nancorr(ymat_cohort, geno_cohort);
+      [~, zmat_perm_chunk_cohort] = nancorr(ymat_cohort, shuffle_geno_cohort);
+      
+      zmat_orig_chunk = zmat_orig_chunk + weight_per_cohort(meta_cohort) * zmat_orig_chunk_cohort;
+      zmat_perm_chunk = zmat_perm_chunk + weight_per_cohort(meta_cohort) * zmat_perm_chunk_cohort;
+    end
+  end
+  
   for orig_or_perm  = 1:2
     if orig_or_perm==1, zmat=zmat_orig_chunk'; else zmat=zmat_perm_chunk'; end;
     logpdfvecs(orig_or_perm,i:j) = dot(inv(C0_reg)*zmat', zmat');
