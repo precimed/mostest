@@ -33,7 +33,24 @@
 #$ -l h=!mmil-compute-5-7.local
 #$ -l h=!mmil-compute-5-14.local
 
+
+#tot -keep=      n
+
+#2384-5          2379
+#2384-10         2374
+#2384-20         2364
+#2384-30         2354
+#2384-40         2344
+
+
+#2384-50         2334
+#2384-100        2284
+#2384-200        2184
+#2384-500        1884
+#2384-800        1584
+#2384-1400       984
+
 bash
 cd /home/oleksandr/precimed/mostest
-\matlab -nodisplay -nosplash -r "prefix = '/space/gwas-syn1/1/data/GWAS/UKBioBank/projects/mostest_vertex/';pheno = fullfile(prefix, 'correct_resid_format/lh.pial.15.fsaverage4.QCed.resid.csv');bfile = fullfile(prefix, 'UKB39k_QCed_051119_mat0p05_chr21');out = fullfile(prefix, 'results3/lh.pial.mat0p05_chr21');mostest;exit;"
+\matlab -nodisplay -nosplash -r "prefix = '/space/gwas-syn1/1/data/GWAS/UKBioBank/projects/mostest_vertex/';pheno = fullfile(prefix, 'correct_resid_format/lh.pial.15.fsaverage4.QCed.resid.csv');bfile = fullfile(prefix, 'UKB39k_QCed_051119_mat0p05');out = fullfile(prefix, 'results3/light_lh.pial.mat0p05_meta50');meta_simu_num_cohors=50;num_eigval_to_regularize=0;mostest_light;exit;"
 
