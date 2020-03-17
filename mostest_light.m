@@ -1,19 +1,26 @@
-% optional arguments
-if ~exist('chunk', 'var'), chunk = 10000; end;
-if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
-if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;  %  how many smallest eigenvalues of C0 matrix (z score correlation) to regularize
-if ~exist('apply_int', 'var'), apply_int = true; end;       % apply rank-based inverse normal transform
-if ~exist('meta_simu_num_cohors', 'var'), meta_simu_num_cohors = 1; end;  % number of cohorts to simulate meta-analysis
+% =============== parameters section =============== 
 
 % required input
 if ~exist('out', 'var'),   error('out file prefix is required'); end
 if ~exist('pheno', 'var'), error('pheno file is required'); end
 if ~exist('bfile', 'var'), error('bfile is required'); end
-if ~exist('snps', 'var'), snps=nan; end; 
-if ~exist('nsubj', 'var'), nsubj=nan; end;
 
-if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
+% optional arguments
+if ~exist('chunk', 'var'), chunk = 10000; end;                                    % chunk size (how many SNPs to read at a time)
+if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;  % how many smallest eigenvalues of C0 matrix (z score correlation) to regularize
+if ~exist('apply_int', 'var'), apply_int = true; end;                             % apply rank-based inverse normal transform
+if ~exist('auto_compile_shuffle', 'var'), auto_compile_shuffle = 1; end;          % automatically compile shuffle.mex
+  
+% debug features - internal use only
+if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
+if ~exist('meta_simu_num_cohors', 'var'), meta_simu_num_cohors = 1; end;  % number of cohorts to simulate meta-analysis
+if ~exist('snps', 'var'), snps=nan; end;                                          % number of SNPs in the analysis
+if ~exist('nsubj', 'var'), nsubj=nan; end;                                        % number of subjects in the analysis
+  
+% =============== end of parameters section =============== 
 
+if auto_compile_shuffle && (exist('Shuffle') ~= 3), mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
+  
 tic
 
 fileID = fopen(sprintf('%s.bim', bfile));
@@ -32,10 +39,11 @@ fprintf('%i snps and %i subjects detected in bfile\n', snps, nsubj);
 
 fprintf('Loading phenotype matrix from %s... ', pheno);
 if 1 
-    ymat_df = readtable(pheno, 'Delimiter', 'tab','HeaderLines',0);
+    ymat_df = readtable(pheno, 'Delimiter', 'tab');
     measures = ymat_df.Properties.VariableNames;
     ymat_orig = table2array(ymat_df);
 else
+    % an alternative helper code that reads phenotype matrix without a header
     ymat_orig=dlmread(pheno); ymat_orig=ymat_orig(:, 2:end);
     measures = cell(size(ymat_orig, 2), 1);
     for i=1:length(measures), measures{i} = sprintf('V%i', i); end;
@@ -144,7 +152,7 @@ for i=1:chunk:snps
   
   for orig_or_perm  = 1:2
     if orig_or_perm==1, zmat=zmat_orig_chunk'; else zmat=zmat_perm_chunk'; end;
-    logpdfvecs(orig_or_perm,i:j) = dot(inv(C0_reg)*zmat', zmat');
+    logpdfvecs(orig_or_perm,i:j) = dot(inv(C0_reg)*zmat', zmat');    % calculate MOSTest test statistic (ToDo: rename logpdfvecs -> mostestvec)
     minpvecs(orig_or_perm,i:j) = 2*normcdf(-max(abs(zmat), [], 2));
   end
   
