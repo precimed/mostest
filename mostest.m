@@ -1,22 +1,29 @@
-% optional arguments
-if ~exist('chunk', 'var'), chunk = 10000; end;
-if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
-if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;  %  how many smallest eigenvalues of C0 matrix (z score correlation) to regularize
-if ~exist('zmat_name', 'var'), zmat_name = ''; end;
-if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical correlation analysis
-if ~exist('apply_int', 'var'), apply_int = true; end;       % apply rank-based inverse normal transform
-if ~exist('use_pheno_corr', 'var'), use_pheno_corr = false; end;  % use correlation structure of the phenotypes
+% =============== parameters section =============== 
 
+% optional arguments
+if ~exist('zmat_name', 'var'), zmat_name = ''; end;                               % re-use univariate GWAS results from previous MOSTest analysis
+if ~exist('chunk', 'var'), chunk = 10000; end;                                    % chunk size (how many SNPs to read at a time)
+if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;  % how many smallest eigenvalues of C0 matrix (z score correlation) to regularize
+if ~exist('apply_int', 'var'), apply_int = true; end;                             % apply rank-based inverse normal transform
+if ~exist('use_pheno_corr', 'var'), use_pheno_corr = false; end;                  % use correlation structure of the phenotypes
+if ~exist('auto_compile_shuffle', 'var'), auto_compile_shuffle = 1; end;          % automatically compile shuffle.mex
+  
 % required input
 if ~exist('out', 'var'),   error('out file prefix is required'); end
 if isempty(zmat_name)
   if ~exist('pheno', 'var'), error('pheno file is required'); end
   if ~exist('bfile', 'var'), error('bfile is required'); end
-  if ~exist('snps', 'var'), snps=nan; end; 
-  if ~exist('nsubj', 'var'), nsubj=nan; end;
 end
 
-if exist('Shuffle') ~= 3, mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
+% debug features - internal use only
+if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical correlation analysis
+if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
+if ~exist('snps', 'var'), snps=nan; end;                                          % number of SNPs in the analysis
+if ~exist('nsubj', 'var'), nsubj=nan; end;                                        % number of subjects in the analysis
+      
+% =============== end of parameters section =============== 
+
+if auto_compile_shuffle && (exist('Shuffle') ~= 3), mex 'Shuffle.c'; end;   % ensure Shuffle is compiled
 
 tic
 
@@ -38,10 +45,11 @@ if isempty(zmat_name)
 
   fprintf('Loading phenotype matrix from %s... ', pheno);
   if 1 
-      ymat_df = readtable(pheno, 'Delimiter', 'tab','HeaderLines',0);
+      ymat_df = readtable(pheno, 'Delimiter', 'tab');
       measures = ymat_df.Properties.VariableNames;
       ymat_orig = table2array(ymat_df);
   else
+      % an alternative helper code that reads phenotype matrix without a header
       ymat_orig=dlmread(pheno); ymat_orig=ymat_orig(:, 2:end);
       measures = cell(size(ymat_orig, 2), 1);
       for i=1:length(measures), measures{i} = sprintf('V%i', i); end;
@@ -170,7 +178,7 @@ logpdfvecs = NaN(2,snps); minpvecs = NaN(2,snps); maxlogpvecs = NaN(2,snps);
 for i  = 1:2
   if i==1, zmat=zmat_orig; else zmat=zmat_perm; end;
   %logpdfvecs(i,:) = -(mvnpdfln(zmat,0,C0_reg)-mvnpdfln(zeros(size(C0,1),1),0,C0_reg))/log(10); % Should be using mvncdf instead?
-  logpdfvecs(i,:) = dot(inv(C0_reg)*zmat', zmat');
+  logpdfvecs(i,:) = dot(inv(C0_reg)*zmat', zmat');    % calculate MOSTest test statistic (ToDo: rename logpdfvecs -> mostestvec)
   minpvecs(i,:) = 2*normcdf(-max(abs(zmat), [], 2));
   maxlogpvecs(i, :) = -log10(minpvecs(i, :));
 end
