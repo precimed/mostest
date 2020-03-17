@@ -43,7 +43,6 @@ and execute ``mostest.m`` script:
 pheno = 'pheno.txt';            % full or relative path to the phenotype file
 bfile = 'chr21';                % full or relative path to plink bfile prefix
 out = 'results';                % prefix for the output files
-snps = 149454; nsubj = 10000;   % number of snps and subjects in bfile
 mostest                         % starts the analysis
 ```
 
@@ -55,9 +54,10 @@ zmat_name='results_zmat.mat'; out = 'results'; mostest
 To convert MOSTest results from ``.mat`` format to text files, use the following script in python:
 ```
 python process_results.py chr21.bim results
+python process_results_ext.py chr21.bim results
 ```
 
-[process_results.py](process_results.py) accepts the following arguments:
+[process_results.py](process_results.py) and [process_results_ext.py](process_results_ext.py) scripts accept the following arguments:
 ```
 Usage: process_results.py <bim> <fname> [<out>], where
  bim   - path to bim file (reference set of SNPs
@@ -65,6 +65,8 @@ Usage: process_results.py <bim> <fname> [<out>], where
          i.e. fname should be the same as "out" argument of the mostest.m
  out   - optional suffix for output files, by defautl fname will be used
 ```
+The ``process_results.py`` produces text files with MOSTest and MinP p-values, while
+``process_results_ext.py`` produce all univariate GWAS results across all input phenotypes.
 
 The demo takes few minutes to complete. Output of the demo is as follows, highlighting
 14436 genome-wide significant SNPs discovered by minP, and 20986 by MOSTest.
@@ -100,6 +102,10 @@ Generate results.***.sumstats files...
 Generate results_***.zmat.csv files...
 Done.
 ```
+
+Note that it is also possible to use ``mostest_light.m`` script, instead of ``mostest.m``.
+``mostest_light.m`` uses much less memory by skip saving univariate results.
+However it is not possible to run ``process_results_ext.py`` on the results from ``mostest_light.m``.
 
 ## MOSTest results
 
