@@ -148,3 +148,7 @@ Output of ``process_results.py``:
   If you want to disable this step, specify ``apply_int=0; ``  in your matlab script before running ``mostest``.
 
 * we recommend that bfile only include SNPs with MAF above 0.5%
+
+* MOSTest spends most time in matrix operations, which by default in MATLAB utilize all available computation threads
+  (unless MATLAB is started with ``-singleCompThread`` flag). Therefore, for large-scale analysis we recommend to run
+  MOSTest on a large server with 16 or more CPUs available.
