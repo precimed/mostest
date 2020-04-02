@@ -368,8 +368,8 @@ def mostest_rerun(args, log, num_eigval_to_regularize, use_pheno_corr, basename_
     log.log('Done mostest re_run')
 
     mat=sio.loadmat('{pheno_tmp}_{label}.mat'.format(pheno_tmp=pheno_tmp, label=label))
-    gamma_a,gamma_b=list(mat['gamma_params'][0])
-    beta_a,beta_b=list(mat['beta_params'][0])
+    gamma_a,gamma_b=list(mat['pd_mostvecs_params'][0])
+    beta_a,beta_b=list(mat['pd_minpvecs_params'][0])
     C0_cond = np.linalg.cond(mat['C0'])
 
     for test in 'minp most'.split():

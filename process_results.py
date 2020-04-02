@@ -25,25 +25,26 @@ if __name__ == '__main__':
 
     # save figures with  QQ plots MOST and minP
     print('Generate {}.plot.png...'.format(out))
-    plt.figure(figsize=(10, 5), dpi=100)
     mat = sio.loadmat(fname + '.mat')
-    df = pd.DataFrame({
-    'minp_x':np.transpose(mat['hv_maxlogpvecs'].flatten()),
-    'minp_y1':np.transpose(-np.log10(1-mat['chc_maxlogpvecs'])).flatten(),
-    'minp_y2':np.transpose(-np.log10(1-mat['cdf_minpvecs'])).flatten(),
-    'most_x':mat['hv_mostvecs'].flatten(),
-    'most_y1':np.transpose(-np.log10(1-mat['chc_mostvecs'])).flatten(),
-    'most_y2':np.transpose(-np.log10(1-mat['cdf_mostvecs'])).flatten() })
+    with np.errstate(divide='ignore'):
+        df = pd.DataFrame({
+        'minp_x':np.transpose(mat['hv_maxlogpvecs'].flatten()),
+        'minp_y1':np.transpose(-np.log10(1-mat['chc_maxlogpvecs'])).flatten(),
+        'minp_y2':np.transpose(-np.log10(1-mat['cdf_minpvecs'])).flatten(),
+        'most_x':mat['hv_mostvecs'].flatten(),
+        'most_y1':np.transpose(-np.log10(1-mat['chc_mostvecs'])).flatten(),
+        'most_y2':np.transpose(-np.log10(1-mat['cdf_mostvecs'])).flatten() })
     df.to_csv(out + '.plot.csv',index=False, sep='\t')
+    plt.figure(figsize=(20, 10), dpi=100)
     plt.subplot(2,4,1)
     plt.plot(df['minp_x'], df['minp_y1'])
     plt.plot(df['minp_x'], df['minp_y2'])
     plt.legend(['data (null)', 'minP (model)'])
-    plt.title(fname + ' (minP)')
+    plt.title('minP')
     plt.subplot(2,4,2)
     plt.plot(df['most_x'], df['most_y1'])
     plt.plot(df['most_x'], df['most_y2'])
-    plt.title(fname + ' (MOSTest)')
+    plt.title('MOSTest')
     plt.legend(['data (null)', 'MOSTest (model)'])
     plt.savefig(out + '.plot.png', bbox_inches='tight')
 

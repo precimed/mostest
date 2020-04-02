@@ -7,7 +7,8 @@ if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;
 if ~exist('apply_int', 'var'), apply_int = true; end;                             % apply rank-based inverse normal transform
 if ~exist('use_pheno_corr', 'var'), use_pheno_corr = false; end;                  % use correlation structure of the phenotypes
 if ~exist('auto_compile_shuffle', 'var'), auto_compile_shuffle = 1; end;          % automatically compile shuffle.mex
-  
+if ~exist('use_paretotails', 'var'), use_paretotails = false; end;                % use paretotails instead of the gamma and beta functions to fit the distribution of the MOSTest & minP test statistic under null
+
 % required input
 if ~exist('out', 'var'),   error('out file prefix is required'); end
 if isempty(zmat_name)
@@ -20,6 +21,7 @@ if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical 
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
 if ~exist('snps', 'var'), snps=nan; end;                                          % number of SNPs in the analysis
 if ~exist('nsubj', 'var'), nsubj=nan; end;                                        % number of subjects in the analysis
+if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.99; end;       % a number close to 1.0, used as a second argument in MATLAB's paretotails
       
 % =============== end of parameters section =============== 
 
@@ -183,10 +185,19 @@ for i  = 1:2
 end
 
 [hc_maxlogpvecs hv_maxlogpvecs] = hist(maxlogpvecs(2,ivec_snp_good),1000); chc_maxlogpvecs = cumsum(hc_maxlogpvecs)/sum(hc_maxlogpvecs);
-pd_minpvecs = fitdist(colvec(minpvecs(2,ivec_snp_good)),'beta'); % Not a great fit
-%  pd_minpvecs.a = 1; % Hard-code known parameter (see http://www.di.fc.ul.pt/~jpn/r/prob/range.html)
 [hc_mostvecs hv_mostvecs] = hist(mostvecs(2,ivec_snp_good),1000); chc_mostvecs = cumsum(hc_mostvecs)/sum(hc_mostvecs);
-pd_mostvecs = fitdist(colvec(mostvecs(2,ivec_snp_good)),'gamma'); % Seems to work -- beta and wbl  do not
+
+if use_paretotails
+  pd_minpvecs = paretotails(minpvecs(2,ivec_snp_good), 0.00, paretotails_quantile);
+  pd_minpvecs_params = upperparams(pd_minpvecs);
+  pd_mostvecs = paretotails(mostvecs(2,ivec_snp_good), 0.00, paretotails_quantile);
+  pd_mostvecs_params = upperparams(pd_mostvecs);
+else
+  pd_minpvecs = fitdist(colvec(minpvecs(2,ivec_snp_good)),'beta'); % Not a great fit
+  pd_minpvecs_params = [pd_minpvecs.a, pd_minpvecs.b];
+  pd_mostvecs = fitdist(colvec(mostvecs(2,ivec_snp_good)),'gamma'); % Seems to work -- beta and wbl  do not
+  pd_mostvecs_params = [pd_mostvecs.a, pd_mostvecs.b];
+end
 
 cdf_minpvecs=cdf(pd_minpvecs,10.^-hv_maxlogpvecs,'upper');
 cdf_mostvecs = pd_mostvecs.cdf(hv_mostvecs);
@@ -196,12 +207,9 @@ mostvecs_corr = -log10(cdf(pd_mostvecs,mostvecs,'upper'));
 fprintf('Done.\n')
 
 fprintf('GWAS yield minP: %d; MOST: %d\n',sum(maxlogpvecs_corr(1,ivec_snp_good)>-log10(5e-8)),sum(mostvecs_corr(1,ivec_snp_good)>-log10(5e-8)));
-fprintf('%i\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t\n', npheno, cond(C0), pd_minpvecs.a, pd_minpvecs.b, pd_mostvecs.a, pd_mostvecs.b) 
+fprintf('%i\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t\n', npheno, cond(C0), pd_minpvecs_params(1), pd_minpvecs_params(2), pd_mostvecs_params(1), pd_mostvecs_params(2)) 
 
 most_time_sec = toc;
-
-beta_params = [pd_minpvecs.a, pd_minpvecs.b]
-gamma_params = [pd_mostvecs.a, pd_mostvecs.b]
 
 minp_log10pval_orig = maxlogpvecs_corr(1, :);
 most_log10pval_orig = mostvecs_corr(1, :);
@@ -212,11 +220,12 @@ fprintf('saving %s... ', fname);
 save(fname, '-v7', ...
  'most_log10pval_orig', 'minp_log10pval_orig', ...
  'most_log10pval_perm', 'minp_log10pval_perm', ...
- 'nvec', 'C0', 'C1', 'ivec_snp_good', ...
+ 'nvec', 'freqvec', 'ivec_snp_good', ...
+ 'measures', 'ymat_corr', 'C0', 'C1', ...
  'minpvecs', 'mostvecs', ...
  'hv_maxlogpvecs', 'hc_maxlogpvecs', 'chc_maxlogpvecs', 'cdf_minpvecs', ...
  'hv_mostvecs', 'hc_mostvecs', 'chc_mostvecs', 'cdf_mostvecs', ...
- 'beta_params', 'gamma_params', 'gwas_time_sec', 'most_time_sec');
+ 'pd_minpvecs_params', 'pd_mostvecs_params', 'gwas_time_sec', 'most_time_sec');
 fprintf('Done.\n')
 
 fprintf('MOSTest analysis is completed.\n')
