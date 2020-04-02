@@ -27,14 +27,13 @@ if __name__ == '__main__':
     print('Generate {}.plot.png...'.format(out))
     plt.figure(figsize=(10, 5), dpi=100)
     mat = sio.loadmat(fname + '.mat')
-    chc_maxlogpvecs = -np.log10(1-np.cumsum(np.transpose(mat['hc_maxlogpvecs']))/np.sum(mat['hc_maxlogpvecs']))
     df = pd.DataFrame({
     'minp_x':np.transpose(mat['hv_maxlogpvecs'].flatten()),
-    'minp_y1':np.transpose(chc_maxlogpvecs).flatten(),
+    'minp_y1':np.transpose(-np.log10(1-mat['chc_maxlogpvecs'])).flatten(),
     'minp_y2':np.transpose(-np.log10(1-mat['cdf_minpvecs'])).flatten(),
-    'most_x':mat['hv_logpdfvecs'].flatten(),
-    'most_y1':np.transpose(-np.log10(1-mat['chc_logpdfvecs'])).flatten(),
-    'most_y2':np.transpose(-np.log10(1-mat['cdf_logpdfvecs'])).flatten() })
+    'most_x':mat['hv_mostvecs'].flatten(),
+    'most_y1':np.transpose(-np.log10(1-mat['chc_mostvecs'])).flatten(),
+    'most_y2':np.transpose(-np.log10(1-mat['cdf_mostvecs'])).flatten() })
     df.to_csv(out + '.plot.csv',index=False, sep='\t')
     plt.subplot(2,4,1)
     plt.plot(df['minp_x'], df['minp_y1'])

@@ -174,11 +174,10 @@ C0_reg = U*diag(max(max_lambda,s))*U'; % Good gamma fit
 %  C0_reg = U*diag(max(s(40),s))*U';
 %C0_reg = C0;  % no regularization
 
-logpdfvecs = NaN(2,snps); minpvecs = NaN(2,snps); maxlogpvecs = NaN(2,snps);
+mostvecs = NaN(2,snps); minpvecs = NaN(2,snps); maxlogpvecs = NaN(2,snps);
 for i  = 1:2
   if i==1, zmat=zmat_orig; else zmat=zmat_perm; end;
-  %logpdfvecs(i,:) = -(mvnpdfln(zmat,0,C0_reg)-mvnpdfln(zeros(size(C0,1),1),0,C0_reg))/log(10); % Should be using mvncdf instead?
-  logpdfvecs(i,:) = dot(inv(C0_reg)*zmat', zmat');    % calculate MOSTest test statistic (ToDo: rename logpdfvecs -> mostestvec)
+  mostvecs(i,:) = dot(inv(C0_reg)*zmat', zmat');
   minpvecs(i,:) = 2*normcdf(-max(abs(zmat), [], 2));
   maxlogpvecs(i, :) = -log10(minpvecs(i, :));
 end
@@ -186,36 +185,36 @@ end
 [hc_maxlogpvecs hv_maxlogpvecs] = hist(maxlogpvecs(2,ivec_snp_good),1000); chc_maxlogpvecs = cumsum(hc_maxlogpvecs)/sum(hc_maxlogpvecs);
 pd_minpvecs = fitdist(colvec(minpvecs(2,ivec_snp_good)),'beta'); % Not a great fit
 %  pd_minpvecs.a = 1; % Hard-code known parameter (see http://www.di.fc.ul.pt/~jpn/r/prob/range.html)
-[hc_logpdfvecs hv_logpdfvecs] = hist(logpdfvecs(2,ivec_snp_good),1000); chc_logpdfvecs = cumsum(hc_logpdfvecs)/sum(hc_logpdfvecs);
-pd_logpdfvecs = fitdist(colvec(logpdfvecs(2,ivec_snp_good)),'gamma'); % Seems to work -- beta and wbl  do not
+[hc_mostvecs hv_mostvecs] = hist(mostvecs(2,ivec_snp_good),1000); chc_mostvecs = cumsum(hc_mostvecs)/sum(hc_mostvecs);
+pd_mostvecs = fitdist(colvec(mostvecs(2,ivec_snp_good)),'gamma'); % Seems to work -- beta and wbl  do not
 
 cdf_minpvecs=cdf(pd_minpvecs,10.^-hv_maxlogpvecs,'upper');
-cdf_logpdfvecs = pd_logpdfvecs.cdf(hv_logpdfvecs);
+cdf_mostvecs = pd_mostvecs.cdf(hv_mostvecs);
 
 maxlogpvecs_corr = -log10(cdf(pd_minpvecs,minpvecs));
-logpdfvecs_corr = -log10(cdf(pd_logpdfvecs,logpdfvecs,'upper'));
+mostvecs_corr = -log10(cdf(pd_mostvecs,mostvecs,'upper'));
 fprintf('Done.\n')
 
-fprintf('GWAS yield minP: %d; MOST: %d\n',sum(maxlogpvecs_corr(1,ivec_snp_good)>-log10(5e-8)),sum(logpdfvecs_corr(1,ivec_snp_good)>-log10(5e-8)));
-fprintf('%i\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t\n', npheno, cond(C0), pd_minpvecs.a, pd_minpvecs.b, pd_logpdfvecs.a, pd_logpdfvecs.b) 
+fprintf('GWAS yield minP: %d; MOST: %d\n',sum(maxlogpvecs_corr(1,ivec_snp_good)>-log10(5e-8)),sum(mostvecs_corr(1,ivec_snp_good)>-log10(5e-8)));
+fprintf('%i\t%.2f\t%.3f\t%.3f\t%.3f\t%.3f\t\n', npheno, cond(C0), pd_minpvecs.a, pd_minpvecs.b, pd_mostvecs.a, pd_mostvecs.b) 
 
 most_time_sec = toc;
 
 beta_params = [pd_minpvecs.a, pd_minpvecs.b]
-gamma_params = [pd_logpdfvecs.a, pd_logpdfvecs.b]
+gamma_params = [pd_mostvecs.a, pd_mostvecs.b]
 
 minp_log10pval_orig = maxlogpvecs_corr(1, :);
-most_log10pval_orig = logpdfvecs_corr(1, :);
+most_log10pval_orig = mostvecs_corr(1, :);
 minp_log10pval_perm = maxlogpvecs_corr(2, :);
-most_log10pval_perm = logpdfvecs_corr(2, :);
+most_log10pval_perm = mostvecs_corr(2, :);
 fname=sprintf('%s.mat', out);
 fprintf('saving %s... ', fname);
 save(fname, '-v7', ...
  'most_log10pval_orig', 'minp_log10pval_orig', ...
  'most_log10pval_perm', 'minp_log10pval_perm', ...
  'nvec', 'C0', 'C1', 'ivec_snp_good', ...
- 'hv_maxlogpvecs', 'hv_logpdfvecs', 'hc_maxlogpvecs', ...
- 'chc_logpdfvecs', 'cdf_minpvecs', 'cdf_logpdfvecs', ...
+ 'hv_maxlogpvecs', 'hc_maxlogpvecs', 'chc_maxlogpvecs', 'cdf_minpvecs', ...
+ 'hv_mostvecs', 'hc_mostvecs', 'chc_mostvecs', 'cdf_mostvecs', ...
  'beta_params', 'gamma_params', 'gwas_time_sec', 'most_time_sec');
 fprintf('Done.\n')
 
