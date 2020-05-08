@@ -3,7 +3,7 @@
 % optional arguments
 if ~exist('zmat_name', 'var'), zmat_name = ''; end;                               % re-use univariate GWAS results from previous MOSTest analysis
 if ~exist('chunk', 'var'), chunk = 10000; end;                                    % chunk size (how many SNPs to read at a time)
-if ~exist('num_eigval_to_regularize', 'var'), num_eigval_to_regularize = 0; end;  % how many smallest eigenvalues of C0 matrix (z score correlation) to regularize
+if ~exist('num_eigval_to_keep', 'var'), num_eigval_to_keep = 0; end;              % how many largest eigenvalues of C0 matrix (z score correlation) to keep, the remaining will be assigned to the num_eigval_to_keep-th eigenvalue, num_eigval_to_keep = 0 - keep all
 if ~exist('apply_int', 'var'), apply_int = true; end;                             % apply rank-based inverse normal transform
 if ~exist('use_pheno_corr', 'var'), use_pheno_corr = false; end;                  % use correlation structure of the phenotypes
 if ~exist('auto_compile_shuffle', 'var'), auto_compile_shuffle = 1; end;          % automatically compile shuffle.mex
@@ -170,7 +170,7 @@ end
 %  max_lambda = s(min(10, length(s)));
 %  max_lambda = min(0.1, s(min(10, length(s)))); % oleksanf: don't regularize unless it's too bad
 
-if (num_eigval_to_regularize > 0), max_lambda=s(end-num_eigval_to_regularize); else max_lambda = 0; end;
+if (num_eigval_to_keep > 0), max_lambda=s(num_eigval_to_keep); else max_lambda = 0; end;
 C0_reg = U*diag(max(max_lambda,s))*U'; % Good gamma fit
 
 %  C0_reg = U*diag(max(s(40),s))*U';
