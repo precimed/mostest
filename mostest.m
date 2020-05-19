@@ -21,7 +21,7 @@ if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical 
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
 if ~exist('snps', 'var'), snps=nan; end;                                          % number of SNPs in the analysis
 if ~exist('nsubj', 'var'), nsubj=nan; end;                                        % number of subjects in the analysis
-if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.99; end;       % a number close to 1.0, used as a second argument in MATLAB's paretotails
+if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.01; end;       % a number close to 1.0, used as a second argument in MATLAB's paretotails
       
 % =============== end of parameters section =============== 
 
@@ -188,9 +188,9 @@ end
 [hc_mostvecs hv_mostvecs] = hist(mostvecs(2,ivec_snp_good),1000); chc_mostvecs = cumsum(hc_mostvecs)/sum(hc_mostvecs);
 
 if use_paretotails
-  pd_minpvecs = paretotails(minpvecs(2,ivec_snp_good), 0.00, paretotails_quantile);
+  pd_minpvecs = paretotails(minpvecs(2,ivec_snp_good),  paretotails_quantile, 1.0);
   pd_minpvecs_params = upperparams(pd_minpvecs);
-  pd_mostvecs = paretotails(mostvecs(2,ivec_snp_good), 0.00, paretotails_quantile);
+  pd_mostvecs = paretotails(mostvecs(2,ivec_snp_good),  paretotails_quantile, 1.0);
   pd_mostvecs_params = upperparams(pd_mostvecs);
 else
   pd_minpvecs = fitdist(colvec(minpvecs(2,ivec_snp_good)),'beta'); % Not a great fit
