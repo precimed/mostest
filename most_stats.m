@@ -26,7 +26,7 @@ fprintf('%d zmat files will be procesed', n_zmat);
 mostvecs = NaN(2,0); minpvecs = NaN(2,0); maxlogpvecs = NaN(2,0);
 ivec_snp_good = false(0);
 for i_zmat = 1:n_zmat
-    zmat_name = zmat_names_array[i_zmat]
+    zmat_name = zmat_names_array(i_zmat);
     fprintf('loading %s... ', zmat_name);
     load(zmat_name);
     fprintf('OK.\n')
