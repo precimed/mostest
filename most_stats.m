@@ -51,7 +51,7 @@ for i_zmat = 1:n_zmat
         C0_reg = U*diag(max(max_lambda,s))*U'; % Good gamma fit
     end
 
-    mostvecs_i = NaN(2,nsnps); minpvecs_i = NaN(2,nsnps); maxlogpvecs_i = NaN(2,snps);
+    mostvecs_i = NaN(2,nsnps); minpvecs_i = NaN(2,nsnps); maxlogpvecs_i = NaN(2,nsnps);
     for i  = 1:2
       if i==1, zmat=zmat_orig; else zmat=zmat_perm; end;
       mostvecs_i(i,:) = dot(inv(C0_reg)*zmat', zmat');
