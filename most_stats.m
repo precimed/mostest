@@ -25,6 +25,7 @@ fprintf('%d zmat files will be procesed\n', n_zmat);
 
 % combine z-score mtrixes
 mostvecs = NaN(2,0); minpvecs = NaN(2,0); maxlogpvecs = NaN(2,0);
+combined_nvec = zeros(0); combined_freqvec = zeros(0);
 ivec_snp_good = false(0);
 for i_zmat = 1:n_zmat
     zmat_name = zmat_names_array(i_zmat);
@@ -33,6 +34,9 @@ for i_zmat = 1:n_zmat
     fprintf('OK.\n')
     nsnps = size(zmat_orig, 1);
     npheno = size(zmat_orig, 2);
+
+    combined_nvec = [combined_nvec; nvec];
+    combined_freqvec = [combined_freqvec; freqvec];
 
     ivec_snp_good_i = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
     % estimate correlation matrix and regularize only for the first iteration
@@ -62,6 +66,9 @@ for i_zmat = 1:n_zmat
     maxlogpvecs = [maxlogpvecs, maxlogpvecs_i];
     ivec_snp_good = [ivec_snp_good; ivec_snp_good_i];
 end
+
+nvec = combined_nvec;
+freqvec = combined_freqvec;
 
 [hc_maxlogpvecs hv_maxlogpvecs] = hist(maxlogpvecs(2,ivec_snp_good),1000); chc_maxlogpvecs = cumsum(hc_maxlogpvecs)/sum(hc_maxlogpvecs);
 [hc_mostvecs hv_mostvecs] = hist(mostvecs(2,ivec_snp_good),1000); chc_mostvecs = cumsum(hc_mostvecs)/sum(hc_mostvecs);
@@ -108,6 +115,5 @@ save(fname, '-v7', ...
  'hv_maxlogpvecs', 'hc_maxlogpvecs', 'chc_maxlogpvecs', 'cdf_minpvecs', ...
  'hv_mostvecs', 'hc_mostvecs', 'chc_mostvecs', 'cdf_mostvecs', ...
  'pd_minpvecs_params', 'pd_mostvecs_params', 'most_time_sec');
-fprintf('Done.\n')
 
-fprintf('MOSTest analysis is completed.\n')
+fprintf('MOSTest analysis is completed in %.2f sec.\n', most_time_sec)
