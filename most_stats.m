@@ -20,7 +20,8 @@ if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.99; end
 tic
 
 n_zmat = numel(zmat_names_array);
-fprintf('%d zmat files will be procesed', n_zmat);
+fprintf('estimating MOSTest and MinP statistics\n')
+fprintf('%d zmat files will be procesed\n', n_zmat);
 
 % combine z-score mtrixes
 mostvecs = NaN(2,0); minpvecs = NaN(2,0); maxlogpvecs = NaN(2,0);
@@ -32,8 +33,6 @@ for i_zmat = 1:n_zmat
     fprintf('OK.\n')
     nsnps = size(zmat_orig, 1);
     npheno = size(zmat_orig, 2);
-
-    fprintf('estimating MOSTest and MinP statistics...')
 
     ivec_snp_good_i = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
     % estimate correlation matrix and regularize only for the first iteration
@@ -61,7 +60,7 @@ for i_zmat = 1:n_zmat
     mostvecs = [mostvecs, mostvecs_i];
     minpvecs = [minpvecs, minpvecs_i];
     maxlogpvecs = [maxlogpvecs, maxlogpvecs_i];
-    ivec_snp_good = [ivec_snp_good, ivec_snp_good_i];
+    ivec_snp_good = [ivec_snp_good; ivec_snp_good_i];
 end
 
 [hc_maxlogpvecs hv_maxlogpvecs] = hist(maxlogpvecs(2,ivec_snp_good),1000); chc_maxlogpvecs = cumsum(hc_maxlogpvecs)/sum(hc_maxlogpvecs);
