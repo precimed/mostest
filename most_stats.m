@@ -61,7 +61,7 @@ for i_zmat = 1:n_zmat
     mostvecs = [mostvecs, mostvecs_i];
     minpvecs = [minpvecs, minpvecs_i];
     maxlogpvecs = [maxlogpvecs, maxlogpvecs_i];
-    ivec_snp_good = [ivec_snp_good, ivec_snp_good_i]
+    ivec_snp_good = [ivec_snp_good, ivec_snp_good_i];
 end
 
 [hc_maxlogpvecs hv_maxlogpvecs] = hist(maxlogpvecs(2,ivec_snp_good),1000); chc_maxlogpvecs = cumsum(hc_maxlogpvecs)/sum(hc_maxlogpvecs);
