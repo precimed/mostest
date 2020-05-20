@@ -20,7 +20,7 @@ if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.99; end
 tic
 
 n_zmat = numel(zmat_names_array);
-fprintf('estimating MOSTest and MinP statistics\n')
+fprintf('Estimating MOSTest and MinP statistics\n')
 fprintf('%d zmat files will be procesed\n', n_zmat);
 
 % combine z-score mtrixes
@@ -115,5 +115,5 @@ save(fname, '-v7', ...
  'hv_maxlogpvecs', 'hc_maxlogpvecs', 'chc_maxlogpvecs', 'cdf_minpvecs', ...
  'hv_mostvecs', 'hc_mostvecs', 'chc_mostvecs', 'cdf_mostvecs', ...
  'pd_minpvecs_params', 'pd_mostvecs_params', 'most_time_sec');
-
+fprintf('Done.\n')
 fprintf('MOSTest analysis is completed in %.2f sec.\n', most_time_sec)
