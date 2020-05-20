@@ -1,8 +1,8 @@
 % =============== parameters section =============== 
 
 % Required args:
-%   zmat_names: array of file names with univariate GWAS results from the MOSTest analysis
-%   out:        output file prefix
+%   zmat_names_array: array of file names with univariate GWAS results from the MOSTest analysis
+%   out:              output file prefix
 if ~exist('zmat_names_array', 'var'), error('zmat files array is required'); end              
 if ~exist('out', 'var'), error('out file prefix is required'); end
 
@@ -21,7 +21,7 @@ tic
 
 n_zmat = numel(zmat_names_array);
 fprintf('Estimating MOSTest and MinP statistics\n')
-fprintf('%d zmat files will be procesed\n', n_zmat);
+fprintf('%d zmat files will be processed\n', n_zmat);
 
 % combine z-score mtrixes
 mostvecs = NaN(2,0); minpvecs = NaN(2,0); maxlogpvecs = NaN(2,0);
