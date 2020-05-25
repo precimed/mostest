@@ -54,7 +54,7 @@ if __name__ == '__main__':
         bim['PVAL'] = np.power(10, -mat[test].flatten())
         bim['Z'] = -stats.norm.ppf(bim['PVAL'].values*0.5) #*effect_sign.astype(np.float64) - effect size not available from MOSTest and minP
         bim['N'] = mat['nvec']
-        bim.to_csv('{}.{}.sumstats'.format(out, test.replace('_log10pval', '')), sep='\t', index=False)
+        bim.to_csv('{}.{}.sumstats'.format(out, test.replace('_log10pval', '')), sep='\t', na_rep="NA", index=False)
 
     print('Done.')
 
