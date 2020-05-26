@@ -29,13 +29,11 @@ tic
 fileID = fopen(sprintf('%s.bim', bfile));
 bim_file = textscan(fileID,'%s %s %s %s %s %s');
 fclose(fileID);
-if isfinite(snps) && (snps ~= length(bim_file{1})), error('snps=%i is incompatible with .bim file; please check your snps parameter (or remove it to auto-detect #snps)', snps);end
 snps=length(bim_file{1});
 
 fileID = fopen(sprintf('%s.fam', bfile));
 fam_file = textscan(fileID,'%s %s %s %s %s %s');
 fclose(fileID);
-if isfinite(nsubj) && (nsubj ~= length(fam_file{1})), error('nsubj=%i is incompatible with .fam file; please check your snps parameter (or remove it to auto-detect nsubj)', nsubj);end
 nsubj=length(fam_file{1});
 
 fprintf('%i snps and %i subjects detected in bfile\n', snps, nsubj);
