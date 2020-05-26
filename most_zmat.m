@@ -26,8 +26,6 @@ if auto_compile_shuffle && (exist('Shuffle') ~= 3), mex 'Shuffle.c'; end;   % en
 
 tic
 
-if isempty(zmat_name)
-
 fileID = fopen(sprintf('%s.bim', bfile));
 bim_file = textscan(fileID,'%s %s %s %s %s %s');
 fclose(fileID);
