@@ -190,8 +190,8 @@ end
 if use_paretotails
   pd_maxlogpvecs = paretotails(maxlogpvecs(2,ivec_snp_good), 0.0, paretotails_quantile);
   pd_minpvecs_params = upperparams(pd_maxlogpvecs);
-  cdf_minpvecs = pd_maxlogpvecs.cdf(hv_maxlogpvecs);
-  maxlogpvecs_corr = -log10(pd_maxlogpvecs.cdf(maxlogpvecs,'upper'));
+  cdf_minpvecs = fixed_paretotails_cdf(pd_maxlogpvecs,hv_maxlogpvecs);
+  maxlogpvecs_corr = -log10(fixed_paretotails_cdf(pd_maxlogpvecs, maxlogpvecs));
 
   pd_mostvecs = paretotails(mostvecs(2,ivec_snp_good),  0.0, paretotails_quantile);
   pd_mostvecs_params = upperparams(pd_mostvecs);
@@ -205,8 +205,14 @@ else
   pd_mostvecs_params = [pd_mostvecs.a, pd_mostvecs.b];
 end
 
-cdf_mostvecs = pd_mostvecs.cdf(hv_mostvecs);
-mostvecs_corr = -log10(cdf(pd_mostvecs,mostvecs,'upper'));
+if use_paretotails
+    cdf_mostvecs = fixed_paretotails_cdf(pd_mostvecs,hv_mostvecs);
+    mostvecs_corr = -log10(fixed_paretotails_cdf(pd_mostvecs,mostvecs));
+else
+    cdf_mostvecs = pd_mostvecs.cdf(hv_mostvecs);
+    mostvecs_corr = -log10(cdf(pd_mostvecs,mostvecs,'upper'));
+end
+
 fprintf('Done.\n')
 
 fprintf('GWAS yield minP: %d; MOST: %d\n',sum(maxlogpvecs_corr(1,ivec_snp_good)>-log10(5e-8)),sum(mostvecs_corr(1,ivec_snp_good)>-log10(5e-8)));
@@ -218,6 +224,14 @@ minp_log10pval_orig = maxlogpvecs_corr(1, :);
 most_log10pval_orig = mostvecs_corr(1, :);
 minp_log10pval_perm = maxlogpvecs_corr(2, :);
 most_log10pval_perm = mostvecs_corr(2, :);
+
+% fix potential log10(0) = Inf issues for valid SNPs
+ivec_snp_good_flat = reshape(ivec_snp_good.', 1, []);
+minp_log10pval_orig(isinf(minp_log10pval_orig) & ivec_snp_good_flat) = -log10(eps(0));
+minp_log10pval_perm(isinf(minp_log10pval_perm) & ivec_snp_good_flat) = -log10(eps(0));
+most_log10pval_orig(isinf(most_log10pval_orig) & ivec_snp_good_flat) = -log10(eps(0));
+most_log10pval_perm(isinf(most_log10pval_perm) & ivec_snp_good_flat) = -log10(eps(0));
+
 fname=sprintf('%s.mat', out);
 fprintf('saving %s... ', fname);
 save(fname, '-v7', ...
