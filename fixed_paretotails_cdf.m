@@ -17,5 +17,5 @@ gpd = makedist('GeneralizedPareto','k',shape_scale(1),'sigma',shape_scale(2),'th
 pval_vec = cdf(orig_paretotails, x, 'upper');
 % Estimate pvalues for the tail (which has probability p) with GeneralizedPareto.
 i_tail = x > loc;
-pval_vec(i_tail) = p*cdf(gpd, x(i_tail), 'upper');
+pval_vec(i_tail) = (1.0 - p)*cdf(gpd, x(i_tail), 'upper');
 

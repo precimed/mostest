@@ -76,8 +76,8 @@ freqvec = combined_freqvec;
 if use_paretotails
   pd_maxlogpvecs = paretotails(maxlogpvecs(2,ivec_snp_good), 0.0, paretotails_quantile);
   pd_minpvecs_params = upperparams(pd_maxlogpvecs);
-  cdf_minpvecs = pd_maxlogpvecs.cdf(hv_maxlogpvecs);
-  maxlogpvecs_corr = -log10(pd_maxlogpvecs.cdf(maxlogpvecs,'upper'));
+  cdf_minpvecs = 1.0 - fixed_paretotails_cdf(pd_maxlogpvecs,hv_maxlogpvecs);
+  maxlogpvecs_corr = -log10(fixed_paretotails_cdf(pd_maxlogpvecs, maxlogpvecs));
 
   pd_mostvecs = paretotails(mostvecs(2,ivec_snp_good),  0.0, paretotails_quantile);
   pd_mostvecs_params = upperparams(pd_mostvecs);
@@ -91,8 +91,14 @@ else
   pd_mostvecs_params = [pd_mostvecs.a, pd_mostvecs.b];
 end
 
-cdf_mostvecs = pd_mostvecs.cdf(hv_mostvecs);
-mostvecs_corr = -log10(cdf(pd_mostvecs,mostvecs,'upper'));
+if use_paretotails
+    cdf_mostvecs = 1.0 - fixed_paretotails_cdf(pd_mostvecs,hv_mostvecs);
+    mostvecs_corr = -log10(fixed_paretotails_cdf(pd_mostvecs,mostvecs));
+else
+    cdf_mostvecs = pd_mostvecs.cdf(hv_mostvecs);
+    mostvecs_corr = -log10(cdf(pd_mostvecs,mostvecs,'upper'));
+end
+
 fprintf('Done.\n')
 
 fprintf('GWAS yield minP: %d; MOST: %d\n',sum(maxlogpvecs_corr(1,ivec_snp_good)>-log10(5e-8)),sum(mostvecs_corr(1,ivec_snp_good)>-log10(5e-8)));

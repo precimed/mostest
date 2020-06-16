@@ -190,7 +190,7 @@ end
 if use_paretotails
   pd_maxlogpvecs = paretotails(maxlogpvecs(2,ivec_snp_good), 0.0, paretotails_quantile);
   pd_minpvecs_params = upperparams(pd_maxlogpvecs);
-  cdf_minpvecs = fixed_paretotails_cdf(pd_maxlogpvecs,hv_maxlogpvecs);
+  cdf_minpvecs = 1.0 - fixed_paretotails_cdf(pd_maxlogpvecs,hv_maxlogpvecs);
   maxlogpvecs_corr = -log10(fixed_paretotails_cdf(pd_maxlogpvecs, maxlogpvecs));
 
   pd_mostvecs = paretotails(mostvecs(2,ivec_snp_good),  0.0, paretotails_quantile);
@@ -206,7 +206,7 @@ else
 end
 
 if use_paretotails
-    cdf_mostvecs = fixed_paretotails_cdf(pd_mostvecs,hv_mostvecs);
+    cdf_mostvecs = 1.0 - fixed_paretotails_cdf(pd_mostvecs,hv_mostvecs);
     mostvecs_corr = -log10(fixed_paretotails_cdf(pd_mostvecs,mostvecs));
 else
     cdf_mostvecs = pd_mostvecs.cdf(hv_mostvecs);
