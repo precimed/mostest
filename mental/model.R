@@ -50,6 +50,8 @@ outfile = args[7]
 
 #----------------------------- Start code ---------------------------#
 suppressMessages(library(snpStats))
+library(MASS)
+library(nnet)
 
 pheno <- read.table(phenodata, header=T, strip.white=T, as.is=T)
 pheno <- pheno[,c('IID',phenoname)]
@@ -106,16 +108,42 @@ for (i in 1:nrow(geno_snpStats)) {
     rownames(dat) <- dat$Row.names
     dat <- dat[,-1]
 
-    if (phenotype == 'binary') {
-        fmodel <- glm(pheno ~ ., family=binomial(link='logit'), data=dat)
-        nmodel <- glm(pheno ~ 1, family=binomial(link='logit'), data=dat)
-    }else if (phenotype == 'continuous') {
+    if (phenotype == 'continuous') {
+        # linear regression
         fmodel <- glm(pheno ~ ., data=dat)
         nmodel <- glm(pheno ~ 1, data=dat)
+        anov = anova(nmodel, fmodel, test = 'Chisq')
+        pval = anov$"Pr(>Chi)"
+    }else if (phenotype == 'binary') {
+        # logistic regression
+        dat$pheno[dat$pheno=='A'] <- 0
+        dat$pheno[dat$pheno=='B'] <- 1
+        dat$pheno <- as.integer(dat$pheno)
+        fmodel <- glm(pheno ~ ., family=binomial, data=dat)
+        nmodel <- glm(pheno ~ 1, family=binomial, data=dat)
+        anov = anova(nmodel, fmodel, test = 'Chisq')
+        pval = anov$"Pr(>Chi)"
+    }else if (phenotype == 'multinomial') {
+        # multinomial logistic regression
+        invisible(capture.output(fmodel <- multinom(pheno ~ ., data=dat)))
+        invisible(capture.output(nmodel <- multinom(pheno ~ 1, data=dat)))
+        anov = anova(nmodel, fmodel, test = 'Chisq')
+        pval = anov$"Pr(Chi)"
+    }else if (phenotype == 'ordered') {
+        # ordinal logistic regression
+        dat$pheno <- factor(dat$pheno)
+        fmodel <- polr(pheno ~ ., data=dat)
+        nmodel <- polr(pheno ~ 1, data=dat)
+        anov = anova(nmodel, fmodel, test = 'Chisq')
+        pval = anov$"Pr(Chi)"
+    }else if (phenotype == 'count') {
+        # poisson regression
+        fmodel <- glm(pheno ~ ., family=poisson, data=dat)
+        nmodel <- glm(pheno ~ 1, family=poisson, data=dat)
+        anov = anova(nmodel, fmodel, test = 'Chisq')
+        pval = anov$"Pr(>Chi)"
     }
-    anov = anova(nmodel, fmodel, test = 'Chisq')
-    pval = anov$"Pr(>Chi)"
-    pval = round(as.numeric(unlist(strsplit(as.character(pval), " "))[2]),3)
+    pval = formatC(as.numeric(unlist(strsplit(as.character(pval), " "))[2]),3, format = "e", digits = 2)
     print(paste(snpname, pval, sep='    '))
     write(paste(snpname, pval, sep='\t'), file=outfile, append=TRUE)
 }
