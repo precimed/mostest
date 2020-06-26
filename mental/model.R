@@ -1,12 +1,12 @@
 #--------------------------- Description ----------------------------#
 
-# Function: This script 
+# Function: This script runs association test between genotype and phenotype data with matched regression model.
 
 # Authors: Yunhan Chu, Alexey A. Shadrin
 
 # (c) 2020-2022 NORMENT, UiO
 
-# Usage:      Rscript test.R genodata phenodata phenoname
+# Usage:      Rscript model.R genodata snplist phenodata phenoname phenotype covardata outfile
 #
 # Arguments:  genodata  - prefix of genotype plink files
 #             snplist   - a numeric or a character vector indicating a subset of SNPs to be selected (default value: NULL)
@@ -24,7 +24,7 @@
 args <- commandArgs(TRUE)
 
 if (length(args) < 6) {
-  stop("Six arguments must be supplied")
+    stop("Six arguments must be supplied")
 }
 
 # genotype data
@@ -52,6 +52,7 @@ outfile = args[7]
 suppressMessages(library(snpStats))
 library(MASS)
 library(nnet)
+options(stringsAsFactors = FALSE)
 
 pheno <- read.table(phenodata, header=T, strip.white=T, as.is=T)
 pheno <- pheno[,c('IID',phenoname)]
@@ -61,9 +62,8 @@ phenomap <- read.table(phenotype, header=T, strip.white=T, as.is=T)
 phenotype = phenomap$TYPE[phenomap$PHENO==phenoname][1]
 
 covar <- read.table(covardata, header=T, strip.white=T, as.is=T)
-covar$Sex[covar$Sex=='Female'] <- 2
-covar$Sex[covar$Sex=='Male'] <- 1
-covar$Sex[!covar$Sex %in% c(1,2)] <- NA
+covar$Sex <- factor(covar$Sex)
+covar$genBatch <- factor(covar$genBatch)
 covar <- covar[,2:8]
 
 if (grepl(":", snplist, fixed = TRUE)==TRUE) {
@@ -90,14 +90,25 @@ if (grepl(":", snplist, fixed = TRUE)==TRUE) {
     }
 }
 
+geno_bim <- read.table(paste0(genodata,'.bim'), header=F, strip.white=T, as.is=T)
 data_snpStats <- read.plink(genodata, select.snps = snplist)
 geno_snpStats <- as(t(data_snpStats$genotypes), 'numeric')
 
-write(paste('SNP', 'PVAL', sep='\t'), file=outfile)
+if (phenotype == 'binary') {
+    write(paste('SNP','CHR','BP','PVAL','A1','A2','MAF','NCASE','NCONTROL','Z','OR', sep='\t'), file=outfile)
+}else {
+    write(paste('SNP','CHR','BP','PVAL','A1','A2','MAF','N','Z','BETA','SE', sep='\t'), file=outfile)
+}
 for (i in 1:nrow(geno_snpStats)) {
     snpname = rownames(geno_snpStats)[i]
+    chr = geno_bim$V1[geno_bim$V2==snpname][1]
+    bp = geno_bim$V4[geno_bim$V2==snpname][1]
+    a1 = geno_bim$V5[geno_bim$V2==snpname][1]
+    a2 = geno_bim$V6[geno_bim$V2==snpname][1]
+
     geno <- data.frame(colnames(geno_snpStats), sub(".* ","", geno_snpStats[i,]))
     colnames(geno) <- c('IID', 'geno')
+    geno$geno <- as.integer(geno$geno)
 
     # merge geno and pheno
     dat <- merge(geno, pheno, by= "IID", all.x=F, all.y=F, sort=F)
@@ -108,27 +119,67 @@ for (i in 1:nrow(geno_snpStats)) {
     rownames(dat) <- dat$Row.names
     dat <- dat[,-1]
 
+    n_ind = nrow(dat)
+    maf = sum(dat$geno)/(n_ind*2)
+    # let the A1 to be minor allele
+    #if (a1 > a2 && maf > 1-maf || a1 < a2 && 1-maf > maf) {
+    #    a3 = a1
+    #    a1 = a2
+    #    a2 = a3
+    #}
+    # calculate minor allele freq
+    if (maf > 1-maf) {
+        maf = 1-maf
+    }
+    maf = round(maf,6)
+
     if (phenotype == 'continuous') {
         # linear regression
         fmodel <- glm(pheno ~ ., data=dat)
         nmodel <- glm(pheno ~ 1, data=dat)
         anov = anova(nmodel, fmodel, test = 'Chisq')
         pval = anov$"Pr(>Chi)"
+        summ = summary(fmodel)
+        beta = summ$coefficients[2,1]
+        se = summ$coefficients[2,2]
     }else if (phenotype == 'binary') {
         # logistic regression
-        dat$pheno[dat$pheno=='A'] <- 0
-        dat$pheno[dat$pheno=='B'] <- 1
-        dat$pheno <- as.integer(dat$pheno)
+        dat$pheno <- factor(dat$pheno)
         fmodel <- glm(pheno ~ ., family=binomial, data=dat)
         nmodel <- glm(pheno ~ 1, family=binomial, data=dat)
         anov = anova(nmodel, fmodel, test = 'Chisq')
         pval = anov$"Pr(>Chi)"
+        summ = summary(fmodel)
+        beta = summ$coefficients[2,1]
+        se = summ$coefficients[2,2]
+        n_ctrl = length(dat$pheno[dat$pheno %in% c('0','A')])
+        n_case = length(dat$pheno[dat$pheno %in% c('1','B')])
+        if (a1 > a2) {
+            n_ctrl_a1 = sum(dat$geno[dat$pheno %in% c('0','A')])
+            n_case_a1 = sum(dat$geno[dat$pheno %in% c('1','B')])
+            n_ctrl_a2 = n_ctrl * 2 - n_ctrl_a1
+            n_case_a2 = n_case * 2 - n_case_a1
+        }else {
+            n_ctrl_a2 = sum(dat$geno[dat$pheno %in% c('0','A')])
+            n_case_a2 = sum(dat$geno[dat$pheno %in% c('1','B')])
+            n_ctrl_a1 = n_ctrl * 2 - n_ctrl_a2
+            n_case_a1 = n_case * 2 - n_case_a2
+        }
+        or = (n_case_a1 * n_ctrl_a2)/(n_ctrl_a1 * n_case_a2)
+        if (beta > 0 && or < 1 || beta < 0 && or > 1) {
+            or = 1/or
+        }
+        or = round(or,6)
     }else if (phenotype == 'multinomial') {
         # multinomial logistic regression
+        dat$pheno <- factor(dat$pheno)
         invisible(capture.output(fmodel <- multinom(pheno ~ ., data=dat)))
         invisible(capture.output(nmodel <- multinom(pheno ~ 1, data=dat)))
         anov = anova(nmodel, fmodel, test = 'Chisq')
         pval = anov$"Pr(Chi)"
+        summ = summary(fmodel)
+        beta = summ$coefficients[1,2]
+        se = summ$standard.errors[1,2]
     }else if (phenotype == 'ordered') {
         # ordinal logistic regression
         dat$pheno <- factor(dat$pheno)
@@ -136,14 +187,36 @@ for (i in 1:nrow(geno_snpStats)) {
         nmodel <- polr(pheno ~ 1, data=dat)
         anov = anova(nmodel, fmodel, test = 'Chisq')
         pval = anov$"Pr(Chi)"
+        suppressMessages(summ <- summary(fmodel))
+        beta = summ$coefficients[1,1]
+        se = summ$coefficients[1,2]
     }else if (phenotype == 'count') {
         # poisson regression
         fmodel <- glm(pheno ~ ., family=poisson, data=dat)
         nmodel <- glm(pheno ~ 1, family=poisson, data=dat)
         anov = anova(nmodel, fmodel, test = 'Chisq')
         pval = anov$"Pr(>Chi)"
+        summ = summary(fmodel)
+        beta = summ$coefficients[2,1]
+        se = summ$coefficients[2,2]
     }
-    pval = formatC(as.numeric(unlist(strsplit(as.character(pval), " "))[2]),3, format = "e", digits = 2)
-    print(paste(snpname, pval, sep='    '))
-    write(paste(snpname, pval, sep='\t'), file=outfile, append=TRUE)
+    if (phenotype %in% c('continuous','binary','multinomial','ordered','count')) {
+        pval = as.numeric(unlist(strsplit(as.character(pval), " "))[2])
+        z = qnorm(pval/2)
+        if (beta < 0) {
+           z = -z
+        }
+        pval = formatC(pval, format = "e", digits = 2)
+        z = round(z,6)
+        beta = round(beta,6)
+        se = round(se,6)
+        if (phenotype == 'binary') {
+            write(paste(snpname, chr, bp, pval, a1, a2, maf, n_case, n_ctrl, z, or, sep='\t'), file=outfile, append=TRUE)
+        }else {
+            write(paste(snpname, chr, bp, pval, a1, a2, maf, n_ind, z, beta, se, sep='\t'), file=outfile, append=TRUE)
+        }
+    }else {
+        write("pheno type does not exist", file=outfile, append=TRUE)
+    }
 }
+write('Done', file=outfile, append=TRUE)
