@@ -8,6 +8,7 @@ if ~exist('apply_int', 'var'), apply_int = true; end;                           
 if ~exist('use_pheno_corr', 'var'), use_pheno_corr = false; end;                  % use correlation structure of the phenotypes
 if ~exist('auto_compile_shuffle', 'var'), auto_compile_shuffle = 1; end;          % automatically compile shuffle.mex
 if ~exist('use_paretotails', 'var'), use_paretotails = false; end;                % use paretotails instead of the gamma and beta functions to fit the distribution of the MOSTest & minP test statistic under null
+if ~exist('maf_threshold', 'var'), maf_threshold = 0.005; end;                      % ignore all variants with maf < maf_threshold in MOSTest analysis
 
 % required input
 if ~exist('out', 'var'),   error('out file prefix is required'); end
@@ -21,7 +22,7 @@ if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical 
 if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
 if ~exist('snps', 'var'), snps=nan; end;                                          % number of SNPs in the analysis
 if ~exist('nsubj', 'var'), nsubj=nan; end;                                        % number of subjects in the analysis
-if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.99; end;       % a number close to 1.0, used as a second argument in MATLAB's paretotails
+if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.9999; end;       % a number close to 1.0, used as a second argument in MATLAB's paretotails
       
 % =============== end of parameters section =============== 
 
@@ -130,6 +131,10 @@ if isempty(zmat_name)
     fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
   end
 
+  % ensure that freqvec contains frequency of minor allele
+  i_major = freqvec > 0.5;
+  freqvec(i_major) = 1.0 - freqvec(i_major);
+
   fname = sprintf('%s_zmat.mat', out);
   fprintf('saving %s as -v7.3... ', fname);
   save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'beta_orig', 'beta_perm', 'measures', 'nvec', 'zvec_cca', 'freqvec', 'ymat_corr');
@@ -146,6 +151,7 @@ gwas_time_sec = toc; tic
 
 fprintf('running MOSTest analysis...')
 ivec_snp_good = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
+ivec_snp_good = ivec_snp_good & (freqvec > maf_threshold); % ignore all SNPs with maf < maf_threshold
 
 if use_pheno_corr
   % use correlation structure of the phenotypes

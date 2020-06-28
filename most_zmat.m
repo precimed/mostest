@@ -123,6 +123,10 @@ for i=1:chunk:snps
   fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
 end
 
+% ensure that freqvec contains frequency of minor allele
+i_major = freqvec > 0.5;
+freqvec(i_major) = 1.0 - freqvec(i_major);
+
 gwas_time_sec = toc;
 
 fname = sprintf('%s_zmat.mat', out);

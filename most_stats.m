@@ -12,9 +12,11 @@ if ~exist('out', 'var'), error('out file prefix is required'); end
 %                       eigenvalue, num_eigval_to_keep = 0 - keep all
 % use_paretotails:      fit tail of the mostest and minp statistics with pareto
 % paretotails_quantile: a number close to 1.0, used as a second argument in MATLAB's paretotails
+% maf_threshold: ignore all variants with maf < maf_threshold in MOSTest analysis
 if ~exist('num_eigval_to_keep', 'var'), num_eigval_to_keep = 0; end
 if ~exist('use_paretotails', 'var'), use_paretotails = false; end
-if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.99; end
+if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.9999; end
+if ~exist('maf_threshold', 'var'), maf_threshold = 0.005; end;
 % =============== end of parameters section ===============
 
 tic
@@ -39,6 +41,8 @@ for i_zmat = 1:n_zmat
     combined_freqvec = [combined_freqvec; freqvec];
 
     ivec_snp_good_i = all(isfinite(zmat_orig) & isfinite(zmat_perm), 2);
+    ivec_snp_good_i = ivec_snp_good_i & (freqvec > maf_threshold); % ignore all SNPs with maf < maf_threshold
+
     % estimate correlation matrix and regularize only for the first iteration
     % This is not 100% accurate but should be accurate enough.
     if i_zmat == 1
