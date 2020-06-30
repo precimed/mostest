@@ -4,11 +4,11 @@ function pheno_resid = resid(pheno_file, ids_file, covar_file)
 %   pheno_file: a file with phenotypes to residualize (lh.pial.0.fsaverage3.csv)
 %                  - no header
 %                  - columns contain phenotypes (no other columns)
-%   ids_file:   a file with imaging ids (subjectList)
+%   ids_file:   a file with imaging ids (vertex_subjectlist)
 %                  - no header
 %                  - first column must contain imaging ids
 %                  - the number of rows should be the same as in phenotype file
-%   covar_file: a file with covariates to use for pre-residualization (demog_vertexwise.csv)
+%   covar_file: a file with covariates to use for pre-residualization (demographics.mostest.csv)
 %                  - has header
 %                  - must contain column "MRID" with imaging ids
 %                  - order of ids in "FID" and "IID" columns must correspond to the order in plink fam
