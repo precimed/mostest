@@ -1,6 +1,6 @@
 #--------------------------- Description ----------------------------#
 
-# Function: This script runs association test between genotype and phenotype data with matched regression model.
+# Function: This script runs association test between genotype and phenotype data using matched regression model.
 
 # Authors: Yunhan Chu, Alexey A. Shadrin
 
@@ -95,7 +95,7 @@ data_snpStats <- read.plink(genodata, select.snps = snplist)
 geno_snpStats <- as(t(data_snpStats$genotypes), 'numeric')
 
 if (phenotype == 'binary') {
-    write(paste('SNP','CHR','BP','PVAL','A1','A2','MAF','NCASE','NCONTROL','Z','OR', sep='\t'), file=outfile)
+    write(paste('SNP','CHR','BP','PVAL','A1','A2','MAF','NCASE','NCONTROL','Z','OR','SE', sep='\t'), file=outfile)
 }else {
     write(paste('SNP','CHR','BP','PVAL','A1','A2','MAF','N','Z','BETA','SE', sep='\t'), file=outfile)
 }
@@ -120,15 +120,16 @@ for (i in 1:nrow(geno_snpStats)) {
     dat <- dat[,-1]
 
     n_ind = nrow(dat)
+    if (a2 > a1) {
+        dat$geno <- 2 - dat$geno
+    }
     maf = sum(dat$geno)/(n_ind*2)
     # let the A1 to be minor allele
-    #if (a1 > a2 && maf > 1-maf || a1 < a2 && 1-maf > maf) {
-    #    a3 = a1
-    #    a1 = a2
-    #    a2 = a3
-    #}
-    # calculate minor allele freq
     if (maf > 1-maf) {
+        a3 = a1
+        a1 = a2
+        a2 = a3
+        dat$geno <- 2 - dat$geno
         maf = 1-maf
     }
     maf = round(maf,6)
@@ -152,24 +153,17 @@ for (i in 1:nrow(geno_snpStats)) {
         summ = summary(fmodel)
         beta = summ$coefficients[2,1]
         se = summ$coefficients[2,2]
+
         n_ctrl = length(dat$pheno[dat$pheno %in% c('0','A')])
         n_case = length(dat$pheno[dat$pheno %in% c('1','B')])
-        if (a1 > a2) {
-            n_ctrl_a1 = sum(dat$geno[dat$pheno %in% c('0','A')])
-            n_case_a1 = sum(dat$geno[dat$pheno %in% c('1','B')])
-            n_ctrl_a2 = n_ctrl * 2 - n_ctrl_a1
-            n_case_a2 = n_case * 2 - n_case_a1
-        }else {
-            n_ctrl_a2 = sum(dat$geno[dat$pheno %in% c('0','A')])
-            n_case_a2 = sum(dat$geno[dat$pheno %in% c('1','B')])
-            n_ctrl_a1 = n_ctrl * 2 - n_ctrl_a2
-            n_case_a1 = n_case * 2 - n_case_a2
-        }
+        n_ctrl_a1 = sum(dat$geno[dat$pheno %in% c('0','A')])
+        n_case_a1 = sum(dat$geno[dat$pheno %in% c('1','B')])
+        n_ctrl_a2 = n_ctrl * 2 - n_ctrl_a1
+        n_case_a2 = n_case * 2 - n_case_a1
+
         or = (n_case_a1 * n_ctrl_a2)/(n_ctrl_a1 * n_case_a2)
-        if (beta > 0 && or < 1 || beta < 0 && or > 1) {
-            or = 1/or
-        }
         or = round(or,6)
+        se = sqrt(1/n_case_a1 + 1/n_ctrl_a1 + 1/n_case_a2 + 1/n_ctrl_a2)
     }else if (phenotype == 'multinomial') {
         # multinomial logistic regression
         dat$pheno <- factor(dat$pheno)
@@ -211,7 +205,7 @@ for (i in 1:nrow(geno_snpStats)) {
         beta = round(beta,6)
         se = round(se,6)
         if (phenotype == 'binary') {
-            write(paste(snpname, chr, bp, pval, a1, a2, maf, n_case, n_ctrl, z, or, sep='\t'), file=outfile, append=TRUE)
+            write(paste(snpname, chr, bp, pval, a1, a2, maf, n_case, n_ctrl, z, or, se, sep='\t'), file=outfile, append=TRUE)
         }else {
             write(paste(snpname, chr, bp, pval, a1, a2, maf, n_ind, z, beta, se, sep='\t'), file=outfile, append=TRUE)
         }
