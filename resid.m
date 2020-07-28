@@ -66,7 +66,7 @@ for i=1:n_nonconst_pheno
     modelspec = sprintf('%s ~ %s', pheno_id, modelspec_covars);
     mdl = fitlm(merged_tab, modelspec);
     pheno_resid(:,i) = mdl.Residuals.Raw;
-    if mod(i,10) == 0
+    if mod(i,50) == 0
         fprintf('%d out of %d phenotypes processed\n', i, n_nonconst_pheno);
     end
 end
