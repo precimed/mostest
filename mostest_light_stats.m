@@ -9,15 +9,17 @@ if ~exist('pheno', 'var'), error('pheno file is required'); end
 if ~exist('bfile', 'var'), error('bfile is required'); end
 
 % Optional args:
-% num_eigval_to_keep:   how many largest eigenvalues of C0 matrix (z score correlation)
-%                       to keep, the remaining will be assigned to the num_eigval_to_keep-th
-%                       eigenvalue, num_eigval_to_keep = 0 - keep all
+% num_eigval_to_keep:     how many largest eigenvalues of C0 matrix (z score correlation)
+%                         to keep, the remaining will be assigned to the num_eigval_to_keep-th
+%                         eigenvalue, num_eigval_to_keep = 0 - keep all
 %   num_perm:             number of genotype permutations
+%   pheno_file_sep:       separator in the pheno file  
 %   chunk:                chunk size (how many SNPs to read at a time)
 %   apply_int:            apply rank-based inverse normal transform
 %   auto_compile_shuffle: automatically compile shuffle.mex
 if ~exist('num_eigval_to_keep', 'var'), num_eigval_to_keep = 0; end;
 if ~exist('num_perm', 'var'), num_perm = 1; end;
+if ~exist('pheno_file_sep', 'var'), pheno_file_sep = 'tab'; end;
 if ~exist('chunk', 'var'), chunk = 10000; end
 if ~exist('apply_int', 'var'), apply_int = true; end
 if ~exist('auto_compile_shuffle', 'var'), auto_compile_shuffle = 1; end
@@ -41,16 +43,16 @@ nsubj=length(fam_file{1});
 fprintf('%i snps and %i subjects detected in bfile\n', snps, nsubj);
 
 fprintf('Loading phenotype matrix from %s... ', pheno);
-if 1 
-    ymat_df = readtable(pheno, 'Delimiter', 'tab');
-    measures = ymat_df.Properties.VariableNames;
-    ymat_orig = table2array(ymat_df);
+[filepath,name,ext] = fileparts(pheno);
+if strcmp(ext,'.mat')
+    load(pheno);
+    ymat_orig = pheno_mat;
 else
-    % an alternative helper code that reads phenotype matrix without a header
-    ymat_orig=dlmread(pheno); ymat_orig=ymat_orig(:, 2:end);
-    measures = cell(size(ymat_orig, 2), 1);
-    for i=1:length(measures), measures{i} = sprintf('V%i', i); end;
+    % load from text file
+    pheno_tab = readtable(fname_in, 'Delimiter', pheno_file_sep);
+    ymat_orig = table2array(pheno_tab);
 end
+
 npheno=size(ymat_orig, 2);
 fprintf('Done, %i phenotypes found\n', npheno);
 if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, while nsubj argument is specified as %i. These must be consistent.', size(ymat_orig, 1), nsubj); end;
@@ -58,19 +60,18 @@ if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, whil
 keep = (min(ymat_orig)~=max(ymat_orig));
 fprintf('Remove %i phenotypes (no variation)\n', length(keep) - sum(keep));
 ymat_orig = ymat_orig(:, keep);
-measures = measures(keep);
 npheno=size(ymat_orig, 2);
 
 % perform rank-based inverse normal transform, equivalently to the following R code:
 % DM[,f] <- qnorm(ecdf(DM[,f])(DM[,f]) - 0.5/dim(DM)[1])
 kurt = nan(npheno, 2);
 for pheno_index=1:npheno
-  vals = ymat_orig(:, pheno_index); kurt(pheno_index, 1) = kurtosis(vals);
-  if apply_int
-    [F, X] = ecdf(vals); F=transpose(F(2:end)); X=transpose(X(2:end));
-    vals = norminv(interp1(X,F,vals,'nearest') - 0.5 / length(vals));
-  end
-  ymat_orig(:, pheno_index) = vals; kurt(pheno_index, 2) = kurtosis(vals);
+    vals = ymat_orig(:, pheno_index); kurt(pheno_index, 1) = kurtosis(vals);
+    if apply_int
+        [F, X] = ecdf(vals); F=transpose(F(2:end)); X=transpose(X(2:end));
+        vals = norminv(interp1(X,F,vals,'nearest') - 0.5 / length(vals));
+    end
+    ymat_orig(:, pheno_index) = vals; kurt(pheno_index, 2) = kurtosis(vals);
 end
 fprintf('kurtosis before INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 1)), max(kurt(:, 1)))
 if apply_int, fprintf('kurtosis after  INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 2)), max(kurt(:, 2))); end;
