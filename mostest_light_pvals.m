@@ -41,7 +41,7 @@ log_minpvecs_perm = -log10(minpvecs_perm);
 
 fprintf('Estimating probability density and p-values for MinP ... ');
 pd_log_minpvecs_perm = paretotails(log_minpvecs_perm, 0.0, paretotails_quantile);
-% take p-values only for the first permutation 
+% for permuted statistics take p-values only for the first permutation 
 minp_log10pval_perm = -log10(fixed_paretotails_cdf(pd_log_minpvecs_perm, log_minpvecs_perm(ind_in_original_template)));
 minp_log10pval_orig = -log10(fixed_paretotails_cdf(pd_log_minpvecs_perm, log_minpvecs_orig));
 fprintf('Done.\n');
@@ -68,7 +68,6 @@ fprintf('saving %s... ', fname);
 save(fname, '-v7', ...
     'most_log10pval_orig', 'minp_log10pval_orig', ...
     'most_log10pval_perm', 'minp_log10pval_perm', ...
-    'nvec', 'freqvec', 'ivec_snp_good', ...
-    'ind_in_original_template', 'most_time_sec');
+    'nvec', 'freqvec', 'ivec_snp_good', 'most_time_sec');
 fprintf('Done.\n')
 fprintf('MOSTest analysis is completed in %.2f sec.\n', most_time_sec)
