@@ -14,6 +14,7 @@ if ~exist('bfile', 'var'), error('bfile is required'); end
 %   auto_compile_shuffle: automatically compile shuffle.mex
 %   perform_cca:          perform canonical correlation analysis
 %   lam_reg:              strength of pre-whitening filter, default is to disable
+if ~exist('pheno_file_sep', 'var'), pheno_file_sep = 'tab'; end;
 if ~exist('chunk', 'var'), chunk = 10000; end
 if ~exist('apply_int', 'var'), apply_int = true; end
 if ~exist('auto_compile_shuffle', 'var'), auto_compile_shuffle = 1; end
@@ -39,15 +40,14 @@ nsubj=length(fam_file{1});
 fprintf('%i snps and %i subjects detected in bfile\n', snps, nsubj);
 
 fprintf('Loading phenotype matrix from %s... ', pheno);
-if 1 
-    ymat_df = readtable(pheno, 'Delimiter', 'tab');
-    measures = ymat_df.Properties.VariableNames;
-    ymat_orig = table2array(ymat_df);
+[filepath,name,ext] = fileparts(pheno);
+if strcmp(ext,'.mat')
+    load(pheno);
+    ymat_orig = pheno_mat;
 else
-    % an alternative helper code that reads phenotype matrix without a header
-    ymat_orig=dlmread(pheno); ymat_orig=ymat_orig(:, 2:end);
-    measures = cell(size(ymat_orig, 2), 1);
-    for i=1:length(measures), measures{i} = sprintf('V%i', i); end;
+    % load from text file
+    pheno_tab = readtable(fname_in, 'Delimiter', pheno_file_sep);
+    ymat_orig = table2array(pheno_tab);
 end
 npheno=size(ymat_orig, 2);
 fprintf('Done, %i phenotypes found\n', npheno);
@@ -56,7 +56,6 @@ if size(ymat_orig, 1) ~= nsubj, error('roi matrix has info for %i subjects, whil
 keep = (min(ymat_orig)~=max(ymat_orig));
 fprintf('Remove %i phenotypes (no variation)\n', length(keep) - sum(keep));
 ymat_orig = ymat_orig(:, keep);
-measures = measures(keep);
 npheno=size(ymat_orig, 2);
 
 % perform rank-based inverse normal transform, equivalently to the following R code:
@@ -131,5 +130,5 @@ gwas_time_sec = toc;
 
 fname = sprintf('%s_zmat.mat', out);
 fprintf('saving %s as -v7.3... ', fname);
-save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'beta_orig', 'beta_perm', 'measures', 'nvec', 'zvec_cca', 'freqvec', 'ymat_corr', 'gwas_time_sec');
+save(fname, '-v7.3', 'zmat_orig', 'zmat_perm', 'beta_orig', 'beta_perm', 'nvec', 'zvec_cca', 'freqvec', 'ymat_corr', 'gwas_time_sec');
 fprintf('OK.\n')
