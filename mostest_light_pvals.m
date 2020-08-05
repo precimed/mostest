@@ -19,7 +19,7 @@ tic
 fprintf('loading %s... ', stats_file);
 load(stats_file);
 fprintf('Done.\n');
-ivec_snp_good = mostvecs_orig & all(mostvecs_perm,2) & minpvecs_orig & all(minpvecs_perm,2);
+ivec_snp_good = isfinite(mostvecs_orig) & all(isfinite(mostvecs_perm),2) & isfinite(minpvecs_orig) & all(isfinite(minpvecs_perm),2);
 ivec_snp_good = ivec_snp_good & (freqvec > maf_threshold); % ignore all SNPs with maf < maf_threshold
 
 % take further only valid SNPs
