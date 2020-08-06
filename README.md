@@ -10,7 +10,8 @@
 
 MOSTest is a tool for join genetical analysis of multiple traits, using multivariate analysis to boost the power of discovering associated loci. If you use MOSTest software for your research publication, please cite the following paper(s):
 
-* Dennis van der Meer, Oleksandr Frei, et al., Making the MOSTest of imaging genetics, bioXriv, doi: https://www.biorxiv.org/content/10.1101/767905v1
+* Dennis van der Meer, Oleksandr Frei, et al. Understanding the genetic determinants of the brain with MOSTest. 
+  Nat Commun 11, 3512 (2020). https://doi.org/10.1038/s41467-020-17368-1
 
 The MOSTest software may not be used for commercial purpose or in medical applications.
 We encourage all users to familiarize themselves with US patent https://www.google.no/patents/US20150356243 "Systems and methods for identifying polymorphisms".
