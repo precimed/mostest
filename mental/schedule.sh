@@ -1,19 +1,18 @@
 #!/bin/bash
 
-#genopool=/tsd/p33/data/durable/s3-api/ukbdata/projects/plsa_mixer/ukb_genetics_qc/ukb_bed
-genopool=testdata
-chunksize=5
-export phenodata=testdata/test_25000_pheno.txt
-export phenotype=testdata/test_25000_pheno_types.txt
-export covardata=testdata/test_25000_covar.txt
-export outfolder=results
+genopool=/cluster/projects/p33/projects/mental/geno/generic_qc
+chunksize=20000
+export phenodata=/cluster/projects/p33/projects/mental/pheno/mostest_mental_pheno_200807.csv
+export phenotype=/cluster/projects/p33/projects/mental/pheno/pheno_type.txt
+export covardata=/cluster/projects/p33/projects/mental/covar/mostest_mental_covar_200807.csv
+export outfolder=/cluster/projects/p33/projects/mental/results/sumstat
 
 mkdir -p $outfolder
 
 for fn in $genopool/*.fam; do
     export genodata=${fn%%.*}
     n_snps=`cat $genodata.bim | wc -l`
-    n_pheno=`head -n1 $phenodata | awk '{print NF-2}'`
+    n_pheno=`head -n1 $phenodata | awk -F ',' '{print NF-1}'`
     for ((i=1; i<=n_snps; i=i+chunksize)); do
         export from=$i
         export to=$((i+chunksize-1))
@@ -22,10 +21,13 @@ for fn in $genopool/*.fam; do
         fi
         export snplist=$from:$to
         for ((j=1; j<=n_pheno; j++)); do
-            export phenoname=`head -n1 $phenodata | awk -v n=$((j+2)) '{print $n}'`
-            echo $(basename $genodata) $snplist $phenoname
+            export phenoname=`head -n1 $phenodata | awk -v n=$((j+1)) -F ',' '{print $n}'`
+            bn=$(basename $genodata)
+            bn=${bn##*chr}
+            bn=${bn%%_*}
+            echo $bn $snplist $phenoname
             #sh run_assoc.job
-            sbatch --job-name ${from}_${to}_$phenoname run_assoc.job
+            sbatch --job-name ${bn}_${from}_$phenoname run_assoc.job
             break
         done
         break

@@ -4,10 +4,11 @@
 #SBATCH --time=5:00:00
 #SBATCH --ntasks=1
 #SBATCH --mem-per-cpu=3828M
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=20
 
 module purge
 module load R/3.5.0
 set -o errexit
 
-Rscript model.R $genodata $snplist $phenodata $phenoname $phenotype $covardata $outfolder/$(basename $genodata)_${from}-${to}_${phenoname}.txt
+mkdir -p $outfolder/${phenoname}
+Rscript model.R $genodata $snplist $phenodata $phenoname $phenotype $covardata $outfolder/${phenoname}/$(basename $genodata)_${from}-${to}.txt
