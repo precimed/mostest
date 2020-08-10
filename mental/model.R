@@ -23,8 +23,8 @@
 # Import arguments from command line
 args <- commandArgs(TRUE)
 
-if (length(args) < 6) {
-    stop("Six arguments must be supplied")
+if (length(args) < 7) {
+    stop("Seven arguments must be supplied")
 }
 
 # genotype data
@@ -45,7 +45,7 @@ phenotype = args[5]
 # covariate data
 covardata = args[6]
 
-# covariate data
+# output file
 outfile = args[7]
 
 #----------------------------- Start code ---------------------------#
