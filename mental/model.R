@@ -64,12 +64,10 @@ pheno <- pheno[pheno$pheno >= 0,]
 phenomap <- read.table(phenotype, header=T, strip.white=T, as.is=T)
 vartype = phenomap$variable_type[phenomap$field_id==unlist(strsplit(phenoname, "-"))[1]][1]
 
-#covar <- read.table(covardata, header=T, sep=',', strip.white=T, as.is=T)
-#colnames(covar)[1] <- 'IID'
-#covar <- na.omit(covar)
-#covar[,3] <- factor(covar[,3])
-#covar <- covar[,-3]
-#covar <- covar[,-2]
+covar <- read.table(covardata, header=T, sep=',', strip.white=T, as.is=T)
+colnames(covar)[1] <- 'IID'
+covar <- na.omit(covar)
+covar[,3] <- factor(covar[,3])
 
 if (grepl(":", snplist, fixed = TRUE)==TRUE) {
     from = as.integer(unlist(strsplit(snplist, ":"))[1])
@@ -106,7 +104,7 @@ for (i in 1:ncol(geno_snpStats)) {
     # merge geno and pheno
     dat <- merge(geno, pheno, by="IID", all.x=F, all.y=F, sort=F)
     # merge dat and covar
-    #dat <- merge(dat, covar, by="IID", all.x=F, all.y=F)
+    dat <- merge(dat, covar, by="IID", all.x=F, all.y=F)
     # remove rows with na
     dat <- na.omit(dat)
     rownames(dat) <- dat$Row.names
@@ -127,70 +125,58 @@ for (i in 1:ncol(geno_snpStats)) {
     if (vartype == 'continuous') {
         # linear regression
         fmodel <- glm(pheno ~ ., data=dat)
-        nmodel <- glm(pheno ~ 1, data=dat)
-        anov = anova(nmodel, fmodel, test = 'Chisq')
-        pval = anov$"Pr(>Chi)"
         summ = summary(fmodel)
         beta = summ$coefficients[2,1]
         se = summ$coefficients[2,2]
+        z = beta/se
+        pval = 2*pnorm(-abs(z))
     }else if (vartype == 'binary') {
         # logistic regression
         dat$pheno <- factor(dat$pheno)
         fmodel <- glm(pheno ~ ., family=binomial, data=dat)
-        nmodel <- glm(pheno ~ 1, family=binomial, data=dat)
-        anov = anova(nmodel, fmodel, test = 'Chisq')
-        pval = anov$"Pr(>Chi)"
         summ = summary(fmodel)
         beta = summ$coefficients[2,1]
         se = summ$coefficients[2,2]
+        z = summ$coefficients[2,3]
+        pval = summ$coefficients[2,4]
         or = exp(beta)
-        or = round(or,6)
         se = or * se
+        or = round(or,6)
         n_ctrl = length(dat$pheno[dat$pheno %in% c('0')])
         n_case = length(dat$pheno[dat$pheno %in% c('1')])
     }else if (vartype == 'categorical' || vartype == 'multiple_response') {
         # multinomial logistic regression
         dat$pheno <- factor(dat$pheno)
         invisible(capture.output(fmodel <- multinom(pheno ~ ., data=dat)))
-        invisible(capture.output(nmodel <- multinom(pheno ~ 1, data=dat)))
-        anov = anova(nmodel, fmodel, test = 'Chisq')
-        pval = anov$"Pr(Chi)"
         summ = summary(fmodel)
         beta = summ$coefficients[1,2]
         se = summ$standard.errors[1,2]
+        z = beta/se
+        pval = 2*pnorm(-abs(z))
     }else if (vartype == 'ordinal') {
         # ordinal logistic regression
         dat$pheno <- factor(dat$pheno)
         fmodel <- polr(pheno ~ ., data=dat)
-        nmodel <- polr(pheno ~ 1, data=dat)
-        anov = anova(nmodel, fmodel, test = 'Chisq')
-        pval = anov$"Pr(Chi)"
         suppressMessages(summ <- summary(fmodel))
         beta = summ$coefficients[1,1]
         se = summ$coefficients[1,2]
+        z = beta/se
+        pval = 2*pnorm(-abs(z))
     }else if (vartype == 'count') {
         # poisson regression
         fmodel <- glm(pheno ~ ., family=poisson, data=dat)
-        nmodel <- glm(pheno ~ 1, family=poisson, data=dat)
-        anov = anova(nmodel, fmodel, test = 'Chisq')
-        pval = anov$"Pr(>Chi)"
         summ = summary(fmodel)
         beta = summ$coefficients[2,1]
         se = summ$coefficients[2,2]
+        z = beta/se
+        pval = 2*pnorm(-abs(z))
     }
     if (vartype %in% c('continuous','binary','categorical','multiple_response','ordinal','count')) {
-        pval = as.numeric(unlist(strsplit(as.character(pval), " "))[2])
-        if (pval < 1e-99) {
-           pval = 1e-99
-        }
-        z = qnorm(pval/2)
-        if (beta < 0) {
-           z = -z
-        }
-        pval = formatC(pval, format = "e", digits = 2)
-        z = round(z,6)
         beta = round(beta,6)
         se = round(se,6)
+        z = round(z,6)
+        pval = signif(pval, digits = 4)
+
         if (vartype == 'binary') {
             write(paste(snpname, chr, bp, pval, a1, a2, maf, z, or, se, n_ind, n_case, n_ctrl, sep='\t'), file=outfile, append=TRUE)
         }else {
