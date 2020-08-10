@@ -14,11 +14,12 @@ for fn in $genopool/*.fam; do
     n_snps=`cat $genodata.bim | wc -l`
     n_pheno=`head -n1 $phenodata | awk -F ',' '{print NF-1}'`
     for ((i=1; i<=n_snps; i=i+chunksize)); do
-        export from=$i
-        export to=$((i+chunksize-1))
+        from=$i
+        to=$((i+chunksize-1))
         if [ $to -gt $n_snps ]; then
-            export to=$n_snps
+            to=$n_snps
         fi
+        export from to
         export snplist=$from:$to
         for ((j=1; j<=n_pheno; j++)); do
             export phenoname=`head -n1 $phenodata | awk -v n=$((j+1)) -F ',' '{print $n}'`

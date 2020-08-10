@@ -64,9 +64,12 @@ pheno <- pheno[pheno$pheno >= 0,]
 phenomap <- read.table(phenotype, header=T, strip.white=T, as.is=T)
 vartype = phenomap$variable_type[phenomap$field_id==unlist(strsplit(phenoname, "-"))[1]][1]
 
-covar <- read.table(covardata, header=T, sep=',', strip.white=T, as.is=T)
-colnames(covar)[1] <- 'IID'
-covar[,3] <- factor(covar[,3])
+#covar <- read.table(covardata, header=T, sep=',', strip.white=T, as.is=T)
+#colnames(covar)[1] <- 'IID'
+#covar <- na.omit(covar)
+#covar[,3] <- factor(covar[,3])
+#covar <- covar[,-3]
+#covar <- covar[,-2]
 
 if (grepl(":", snplist, fixed = TRUE)==TRUE) {
     from = as.integer(unlist(strsplit(snplist, ":"))[1])
@@ -103,7 +106,7 @@ for (i in 1:ncol(geno_snpStats)) {
     # merge geno and pheno
     dat <- merge(geno, pheno, by="IID", all.x=F, all.y=F, sort=F)
     # merge dat and covar
-    dat <- merge(dat, covar, by="IID", all.x=F, all.y=F)
+    #dat <- merge(dat, covar, by="IID", all.x=F, all.y=F)
     # remove rows with na
     dat <- na.omit(dat)
     rownames(dat) <- dat$Row.names
@@ -112,6 +115,13 @@ for (i in 1:ncol(geno_snpStats)) {
     n_ind = nrow(dat)
 
     maf = sum(dat$geno)/(n_ind*2)
+    if (maf > 1-maf) {
+        a3 = a1
+        a1 = a2
+        a2 = a3
+        dat$geno <- 2 - dat$geno
+        maf = 1-maf
+    }
     maf = round(maf,6)
 
     if (vartype == 'continuous') {
