@@ -11,6 +11,8 @@ if ~exist('out', 'var'), error('out file prefix'); end
 % paretotails_quantile: a number close to 1.0, used as a second argument in MATLAB's paretotails
 % maf_threshold: ignore all variants with maf < maf_threshold in MOSTest analysis
 if ~exist('daletails_quantile', 'var') daletails_quantile = 0.9999; end
+if ~exist('daletails_quantile_up', 'var') daletails_quantile_up = 1.0; end
+if ~exist('daletails_distrib', 'var') daletails_distrib = 'gamma'; end
 if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.9999; end
 if ~exist('maf_threshold', 'var'), maf_threshold = 0.005; end;
 % =============== end of parameters section ===============
@@ -41,23 +43,23 @@ log_minpvecs_orig = -log10(minpvecs_orig);
 log_minpvecs_perm = -log10(minpvecs_perm);
 
 fprintf('Estimating probability density and p-values for MinP ... ');
-pd_log_minpvecs_perm = daletails(log_minpvecs_perm, daletails_quantile, 1, 'gamma'); %paretotails(log_minpvecs_perm, 0.0, paretotails_quantile);
+pd_log_minpvecs_perm = daletails(log_minpvecs_perm, daletails_quantile, daletails_quantile_up, daletails_distrib); %paretotails(log_minpvecs_perm, 0.0, paretotails_quantile);
 % for permuted statistics take p-values only for the first permutation 
 minp_log10pval_perm = -log10(pd_log_minpvecs_perm.cdf(log_minpvecs_perm(ind_in_original_template),'upper')); % -log10(fixed_paretotails_cdf(pd_log_minpvecs_perm, log_minpvecs_perm(ind_in_original_template)));
 minp_log10pval_orig = -log10(pd_log_minpvecs_perm.cdf(log_minpvecs_orig,'upper')); % -log10(fixed_paretotails_cdf(pd_log_minpvecs_perm, log_minpvecs_orig));
 fprintf('Done.\n');
 
 fprintf('Estimating probability density and p-values for MOSTest ... ');
-pd_mostvecs_perm = daletails(mostvecs_perm, daletails_quantile, 1, 'gamma'); % paretotails(mostvecs_perm,  0.0, paretotails_quantile);
+pd_mostvecs_perm = daletails(mostvecs_perm, daletails_quantile, daletails_quantile_up, daletails_distrib); % paretotails(mostvecs_perm,  0.0, paretotails_quantile);
 most_log10pval_perm = -log10(pd_mostvecs_perm.cdf(mostvecs_perm(ind_in_original_template),'upper')); % -log10(fixed_paretotails_cdf(pd_mostvecs_perm, mostvecs_perm(ind_in_original_template)));
 most_log10pval_orig = -log10(pd_mostvecs_perm.cdf(mostvecs_orig,'upper')); % -log10(fixed_paretotails_cdf(pd_mostvecs_perm, mostvecs_orig));
 fprintf('Done.\n')
 
-% fix potential log10(0) = Inf issues for valid SNPs
-minp_log10pval_orig(isinf(minp_log10pval_orig)) = -log10(eps(0));
-minp_log10pval_perm(isinf(minp_log10pval_perm)) = -log10(eps(0));
-most_log10pval_orig(isinf(most_log10pval_orig)) = -log10(eps(0));
-most_log10pval_perm(isinf(most_log10pval_perm)) = -log10(eps(0));
+% fix potential log10(0) = Inf and log(NaN) = NaN issues for valid SNPs
+minp_log10pval_orig(~isfinite(minp_log10pval_orig)) = -log10(eps(0));
+minp_log10pval_perm(~isfinite(minp_log10pval_perm)) = -log10(eps(0));
+most_log10pval_orig(~isfinite(most_log10pval_orig)) = -log10(eps(0));
+most_log10pval_perm(~isfinite(most_log10pval_perm)) = -log10(eps(0));
 
 fprintf('GWAS yield minP: %d; MOST: %d\n',sum(minp_log10pval_orig > -log10(5e-8)), sum(most_log10pval_orig > -log10(5e-8)));
 
