@@ -1,7 +1,8 @@
 #!/bin/bash
 
 genopool=/cluster/projects/p33/projects/mental/geno/generic_qc
-chunksize=20000
+chr=1
+chunksize=1000
 export phenodata=/cluster/projects/p33/projects/mental/pheno/mostest_mental_pheno_200807.csv
 export phenotype=/cluster/projects/p33/projects/mental/pheno/pheno_type_subset.txt
 export covardata=/cluster/projects/p33/projects/mental/covar/mostest_mental_covar_200807.csv
@@ -15,11 +16,9 @@ for ((j=1; j<=n_pheno; j++)); do
     if [ `awk -v fieldid=${phenoname%%-*} '$1==fieldid' $phenotype | wc -l` -eq 0 ]; then
         continue
     fi
-    for fn in $genopool/*.fam; do
+    for ((k=chr; k<=chr; k++)); do
+        fn=$genopool/ukb_imp_chr${k}_v3_qc.fam
         export genodata=${fn%%.*}
-        bn=$(basename $genodata)
-        bn=${bn##*chr}
-        bn=${bn%%_*}
         n_snps=`cat $genodata.bim | wc -l`
         for ((i=1; i<=n_snps; i=i+chunksize)); do
             from=$i
@@ -29,12 +28,10 @@ for ((j=1; j<=n_pheno; j++)); do
             fi
             export from to
             export snplist=$from:$to
-            echo $bn $snplist $phenoname
+            echo $k $snplist $phenoname
             #sh run_assoc.job
-            sbatch --job-name ${phenoname}_${bn}_${from} run_assoc.job
-            break
-         done
-        break
+            sbatch --job-name ${phenoname}_${k}_${from} run_assoc.job
+            #break
+        done
     done
-    break
 done
