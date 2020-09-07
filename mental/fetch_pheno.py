@@ -19,8 +19,8 @@ class FieldID(object):
     """
     An object to handle UKB field ids.
     Field ID must have format:
-        X[-X[.X]]
-    where X is an arbitrary number of integers. Parts in the square brakets are
+        fid[-inst[.ind]]
+    where fid/inst/ind are arbitrary integers. Parts in the square brakets are
     optional.
     """
     def __init__(self, id_str):
@@ -121,6 +121,7 @@ if __name__ == "__main__":
     basket_release_files = get_basket_release_files(args.baskets_dir)
 
     out_dfs = []
+    fetched_fids = []
     for fid in args.fids:
         print(f'Processing {fid}')
         basket_release_files_for_fid = get_basket_release_files_for_fid(fid, basket_release_files)
@@ -128,13 +129,21 @@ if __name__ == "__main__":
             print('\n'.join([f'    {i+1}: {brf}' for i,brf in enumerate(basket_release_files_for_fid)]))
 
         latest_brf_for_fid = max(basket_release_files_for_fid, key=lambda brf: brf.release_date)
-        print(f'    Latest release file: {latest_brf_for_fid}')
+        print(f'    Latest release file:\n        {latest_brf_for_fid}')
 
         if args.out:
             # extract data
-            usecols = ['eid'] + [str(i) for i in latest_brf_for_fid.fids]
-            df = pd.read_csv(latest_brf_for_fid.csv_path, usecols=usecols, index_col='eid', dtype=object, na_filter=False)
-            out_dfs.append(df)
+            current_fids = []
+            for fid_str in map(str,latest_brf_for_fid.fids):
+                if fid_str in fetched_fids:
+                    print(f'        {fid_str} has been fetched already, skipping now.')
+                else:
+                    current_fids.append(fid_str)
+            if current_fids:
+                fetched_fids += current_fids
+                usecols = ['eid'] + current_fids
+                df = pd.read_csv(latest_brf_for_fid.csv_path, usecols=usecols, index_col='eid', dtype=object, na_filter=False)
+                out_dfs.append(df)
 
     if args.out:
         # merge and save
