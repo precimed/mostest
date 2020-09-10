@@ -30,12 +30,12 @@ function geno_mat = bed2mat(bfile, snp_idx)
         fclose(bed_id);
 
         bim_id = fopen(sprintf('%s.bim', bfile));
-        bim_file = textscan(bim_id,'%s %s %s %s %s %s');
+        bim_file = textscan(bim_id,'%s %*[^\n]');
         fclose(bim_id);
         nsnps = length(bim_file{1});
 
         fam_id = fopen(sprintf('%s.fam', bfile));
-        fam_file = textscan(fam_id,'%s %s %s %s %s %s');
+        fam_file = textscan(fam_id,'%s %*[^\n]');
         fclose(fam_id);
         nsamples = length(fam_file{1});
 
@@ -51,5 +51,6 @@ function geno_mat = bed2mat(bfile, snp_idx)
     end
    
     ui16 = uint16(bed.Data.geno(:,snp_idx)) + 1;
-    geno_mat = reshape(byte_geno_map(:,ui16), nsamples, numel(snp_idx));
+    geno_mat = reshape(byte_geno_map(:,ui16), 4*nrows, numel(snp_idx));
+    geno_mat = geno_mat(1:nsamples,:);
 end
