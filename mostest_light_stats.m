@@ -49,7 +49,7 @@ if strcmp(ext,'.mat')
     ymat_orig = pheno_mat;
 else
     % load from text file
-    pheno_tab = readtable(fname_in, 'Delimiter', pheno_file_sep);
+    pheno_tab = readtable(pheno, 'Delimiter', pheno_file_sep);
     ymat_orig = table2array(pheno_tab);
 end
 
