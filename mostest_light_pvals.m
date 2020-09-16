@@ -25,6 +25,7 @@ load(stats_file);
 fprintf('Done.\n');
 ivec_snp_good = isfinite(mostvecs_orig) & all(isfinite(mostvecs_perm),2) & isfinite(minpvecs_orig) & all(isfinite(minpvecs_perm),2);
 ivec_snp_good = ivec_snp_good & (freqvec > maf_threshold); % ignore all SNPs with maf < maf_threshold
+n_good = sum(ivec_snp_good);
 
 % take further only valid SNPs
 nvec = nvec(ivec_snp_good);
@@ -33,7 +34,6 @@ mostvecs_orig = mostvecs_orig(ivec_snp_good);
 mostvecs_perm = mostvecs_perm(ivec_snp_good,:);
 minpvecs_orig = minpvecs_orig(ivec_snp_good);
 minpvecs_perm = minpvecs_perm(ivec_snp_good,:);
-ind_in_original_template = find(ivec_snp_good);
 
 fprintf('%d/%d valid elements in original/permuted statistics\n', numel(mostvecs_orig), numel(mostvecs_perm));
 
@@ -46,13 +46,13 @@ log_minpvecs_perm = -log10(minpvecs_perm);
 fprintf('Estimating probability density and p-values for MinP ... ');
 pd_log_minpvecs_perm = daletails(log_minpvecs_perm, daletails_quantile, daletails_quantile_up, daletails_distrib_minp);
 % for permuted statistics take p-values only for the first permutation 
-minp_log10pval_perm = -log10(pd_log_minpvecs_perm.cdf(log_minpvecs_perm(ind_in_original_template),'upper'));
+minp_log10pval_perm = -log10(pd_log_minpvecs_perm.cdf(log_minpvecs_perm(1:n_good),'upper'));
 minp_log10pval_orig = -log10(pd_log_minpvecs_perm.cdf(log_minpvecs_orig,'upper'));
 fprintf('Done.\n');
 
 fprintf('Estimating probability density and p-values for MOSTest ... ');
 pd_mostvecs_perm = daletails(mostvecs_perm, daletails_quantile, daletails_quantile_up, daletails_distrib_most);
-most_log10pval_perm = -log10(pd_mostvecs_perm.cdf(mostvecs_perm(ind_in_original_template),'upper'));
+most_log10pval_perm = -log10(pd_mostvecs_perm.cdf(mostvecs_perm(1:n_good),'upper'));
 most_log10pval_orig = -log10(pd_mostvecs_perm.cdf(mostvecs_orig,'upper'));
 fprintf('Done.\n')
 
