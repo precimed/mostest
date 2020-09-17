@@ -52,6 +52,8 @@ else
     pheno_tab = readtable(pheno, 'Delimiter', pheno_file_sep);
     ymat_orig = table2array(pheno_tab);
 end
+% ensure that phenotype matrix is double to avoid issues with precision
+ymat_orig = double(ymat_orig);
 
 npheno=size(ymat_orig, 2);
 fprintf('Done, %i phenotypes found\n', npheno);
@@ -98,29 +100,33 @@ mostvecs_perm = NaN(snps, num_perm);
 minpvecs_perm = NaN(snps, num_perm);
 
 Shuffle(rand(4,1),'seed');
+% inv_C0_reg = [npheno x npheno] double matrix
 inv_C0_reg = inv(C0_reg);
 
 for i=1:chunk:snps
   j=min(i+chunk-1, snps);
-  fprintf('gwas: loading snps %i to %i... ', i, j);    tic;
+  fprintf('gwas: loading snps %i to %i... ', i, j);
+  tic;
   geno_int8 = PlinkRead_binary2(nsubj, i:j, bfile);
-  fprintf('processing... ', i, j);   
-  geno = nan(size(geno_int8), 'single'); for code = int8([0,1,2]), geno(geno_int8==code) = single(code); end;
+  geno = double(geno_int8); % need to convert to double to avoid zeros in normcdf
+  geno(geno_int8 == -1) = nan; % set missing genotypes to nan
 
+  fprintf('processing... ', i, j);   
   [rmat_chunk, zmat_chunk] = nancorr(ymat, geno);
+  % zmat_chunk = [npheno x chunk] double matrix
   mostvecs_orig(i:j) = dot(inv_C0_reg*zmat_chunk, zmat_chunk);
-  minpvecs_orig(i:j) = 2*normcdf(-max(abs(zmat_chunk), [], 1));
+  minpvecs_orig(i:j) = 2*normcdf(-max(abs(zmat_chunk)));
 
   % process permuted genotypes
   for i_perm = 1:num_perm
       shuffle_geno = Shuffle(geno);
       [rmat_chunk, zmat_chunk] = nancorr(ymat, shuffle_geno);
       mostvecs_perm(i:j, i_perm) = dot(inv_C0_reg*zmat_chunk, zmat_chunk); 
-      minpvecs_perm(i:j, i_perm) = 2*normcdf(-max(abs(zmat_chunk), [], 1));
+      minpvecs_perm(i:j, i_perm) = 2*normcdf(-max(abs(zmat_chunk)));
   end
 
-  nvec(i:j) = sum(isfinite(geno))';
-  freqvec(i:j) = (1*sum(geno==1) + 2*sum(geno==2))' ./ (2*nvec(i:j));
+  nvec(i:j) = sum(isfinite(geno));
+  freqvec(i:j) = sum(geno, 'omitnan')' ./ (2*nvec(i:j));
   fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
 end
 
