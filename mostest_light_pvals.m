@@ -9,10 +9,11 @@ if ~exist('out', 'var'), error('out file prefix'); end
 
 % Optional args:
 % daletails_quantile: a number slightly below 1.0 (argument of daletails), ecdf is used to approximate distribution of most/minp statistics below this quantile.
+% daletails_quantile_up: parameters of distribution are fitted based on most/minp statistics values between daletails_quantile and daletails_quantile_up. Nan results in automatic selection.
 % daletails_distrib_most/daletails_distrib_minp: distribution type  to uses for extrapolation of the upper tail (above daletails_quantile) of most/minp statistics values (argument of daletails).
 % maf_threshold: ignore all variants with maf < maf_threshold in MOSTest analysis
 if ~exist('daletails_quantile', 'var') daletails_quantile = 0.9999; end
-if ~exist('daletails_quantile_up', 'var') daletails_quantile_up = 1.0; end
+if ~exist('daletails_quantile_up', 'var') daletails_quantile_up = nan; end
 if ~exist('daletails_distrib_most', 'var') daletails_distrib_most = 'gamma'; end
 if ~exist('daletails_distrib_minp', 'var') daletails_distrib_minp = 'beta'; end
 if ~exist('maf_threshold', 'var'), maf_threshold = 0.005; end;
@@ -42,6 +43,8 @@ mostvecs_perm = reshape(mostvecs_perm,numel(mostvecs_perm),1);
 minpvecs_perm = reshape(minpvecs_perm,numel(minpvecs_perm),1);
 log_minpvecs_orig = -log10(minpvecs_orig);
 log_minpvecs_perm = -log10(minpvecs_perm);
+
+if isnan(daletails_quantile_up) daletails_quantile_up = 10/n_good; end
 
 fprintf('Estimating probability density and p-values for MinP ... ');
 pd_log_minpvecs_perm = daletails(log_minpvecs_perm, daletails_quantile, daletails_quantile_up, daletails_distrib_minp);
