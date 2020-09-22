@@ -44,7 +44,7 @@ minpvecs_perm = reshape(minpvecs_perm,numel(minpvecs_perm),1);
 log_minpvecs_orig = -log10(minpvecs_orig);
 log_minpvecs_perm = -log10(minpvecs_perm);
 
-if isnan(daletails_quantile_up) daletails_quantile_up = 10/n_good; end
+if isnan(daletails_quantile_up) daletails_quantile_up = 1 - 10/n_good; end
 
 fprintf('Estimating probability density and p-values for MinP ... ');
 pd_log_minpvecs_perm = daletails(log_minpvecs_perm, daletails_quantile, daletails_quantile_up, daletails_distrib_minp);
