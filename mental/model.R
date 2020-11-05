@@ -54,18 +54,20 @@ library(nnet)
 source("readplink.R")
 options(stringsAsFactors = FALSE)
 
-pheno <- read.table(phenodata, header=T, sep=",", strip.white=T, as.is=T)
+#pheno <- read.table(phenodata, header=T, sep=",", strip.white=T, as.is=T)
+pheno <- read.table(phenodata, header=T, sep="\t", strip.white=T, as.is=T)
 colnames(pheno)[1] <- 'IID'
 pheno <- pheno[,c('IID',sub('^','X',sub('-','.',phenoname)))]
 colnames(pheno) <- c('IID','pheno')
 pheno <- pheno[!is.na(pheno$pheno),]
-pheno <- pheno[pheno$pheno >= 0,]
+#pheno <- pheno[pheno$pheno >= 0,]
 
 phenomap <- read.table(phenotype, header=T, strip.white=T, as.is=T)
 vartype = phenomap$variable_type[phenomap$field_id==unlist(strsplit(phenoname, "-"))[1]][1]
 
 covar <- read.table(covardata, header=T, sep=',', strip.white=T, as.is=T)
 colnames(covar)[1] <- 'IID'
+covar <- covar[,1:13]
 covar <- na.omit(covar)
 covar[,3] <- factor(covar[,3])
 
@@ -128,8 +130,11 @@ for (i in 1:ncol(geno_snpStats)) {
         summ = summary(fmodel)
         beta = summ$coefficients[2,1]
         se = summ$coefficients[2,2]
-        z = beta/se
-        pval = 2*pnorm(-abs(z))
+        pval = summ$coefficients[2,4]
+        z = abs(qnorm(pval/2))
+        if (beta < 0) {
+            z = -z
+        }
     }else if (vartype == 'binary') {
         # logistic regression
         dat$pheno <- factor(dat$pheno)
@@ -157,11 +162,17 @@ for (i in 1:ncol(geno_snpStats)) {
         # ordinal logistic regression
         dat$pheno <- factor(dat$pheno)
         fmodel <- polr(pheno ~ ., data=dat)
-        suppressMessages(summ <- summary(fmodel))
-        beta = summ$coefficients[1,1]
-        se = summ$coefficients[1,2]
-        z = beta/se
-        pval = 2*pnorm(-abs(z))
+        beta = 0
+        se = 1
+        z = 0
+        pval = 1
+        try({
+            suppressMessages(summ <- summary(fmodel))
+            beta = summ$coefficients[1,1]
+            se = summ$coefficients[1,2]
+            z = beta/se
+            pval = 2*pnorm(-abs(z))
+        })
     }else if (vartype == 'count') {
         # poisson regression
         fmodel <- glm(pheno ~ ., family=poisson, data=dat)
