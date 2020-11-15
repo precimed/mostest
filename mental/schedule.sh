@@ -1,7 +1,7 @@
 #!/bin/bash
 
 genopool=/cluster/projects/p33/projects/mental/geno_hapmap/by_chunk_1K
-np=1
+np=42
 chr_from=1
 chr_to=22
 chunksize=1000
@@ -34,6 +34,9 @@ for ((j=$np; j<=n_pheno; j++)); do
             bn=$(basename $chk)
             bn=${bn%.*}
             bn=${bn##*chunk_}
+            if [ -f $outfolder/${phenoname}/$(basename $genodata)_${from}-${to}.txt ] && [ `cat $outfolder/${phenoname}/$(basename $genodata)_${from}-${to}.txt | wc -l` -eq $((to-from+3)) ]; then
+                continue
+            fi
             echo $chr $bn $snplist $phenoname
             sbatch --job-name ${phenoname}_$bn run_assoc.job
             #sbatch --nice=1000 --job-name ${phenoname}_$bn run_assoc.job
