@@ -29,9 +29,9 @@ tic
 
 %% Input files
 
-input_bfile_folder = '/home/aihual/meta_02112020/input_bfile';%uigetdir('Select the bfile folder')
-output_folder = '/home/aihual/meta_02112020/output';%uigetdir(input_folder,'Select the folder to save output');
-input_pheno_folder = '/home/aihual/meta_02112020/input_pheno';%uigetdir('Select the pheno folder')
+input_bfile_folder = '/home/aihual/meta_29112020/input_bfile';%uigetdir('Select the bfile folder')
+output_folder = '/home/aihual/meta_29112020/output';%uigetdir(input_folder,'Select the folder to save output');
+input_pheno_folder = '/home/aihual/meta_29112020/input_pheno';%uigetdir('Select the pheno folder')
 
 bim_files = dir(fullfile(input_bfile_folder,'*.bim'));
 no_bfiles=length(bim_files);
@@ -162,7 +162,7 @@ for i=1:chunk:snps %need to change for different cohort with different nsnps
   
   for orig_or_perm  = 1:2
     if orig_or_perm==1, zmat=zmat_orig_chunk'; else zmat=zmat_perm_chunk'; end;
-    logpdfvecs(orig_or_perm,i:j) = dot(inv(C2_reg)*zmat', zmat');    % calculate MOSTest test statistic (ToDo: rename logpdfvecs -> mostestvec)
+    logpdfvecs(orig_or_perm,i:j) = dot(inv(C0_reg)*zmat', zmat');    % calculate MOSTest test statistic (ToDo: rename logpdfvecs -> mostestvec)
     minpvecs(orig_or_perm,i:j) = 2*normcdf(-max(abs(zmat), [], 2));
   end
   
@@ -172,7 +172,7 @@ for i=1:chunk:snps %need to change for different cohort with different nsnps
   fprintf('done in %.1f sec, %.1f %% completed\n', toc, 100*(j+1)/snps);
 end
 
-
+return
 gwas_time_sec = toc; tic
 
 %% Mostest analysis
