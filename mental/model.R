@@ -2,18 +2,18 @@
 
 # Function: This script runs association test between genotype and phenotype data using matched regression model.
 
-# Authors: Yunhan Chu, Alexey A. Shadrin
+# Authors: Yunhan Chu, Alexey A. Shadrin, Guy F. L. Hindley
 
 # (c) 2020-2022 NORMENT, UiO
 
 # Usage:      Rscript model.R genodata snplist phenodata phenoname phenotype covardata outfile
 #
 # Arguments:  genodata  - prefix of genotype plink files
-#             snplist   - a numeric or a character vector indicating a subset of SNPs to be selected (default value: NULL)
+#             snplist   - a numeric or a character vector indicating a subset of SNPs to be selected
 #             phenodata - phenotype data files including one or more phenotype columns
 #             phenoname - a column name of phenotype in phenodata
 #             phenotype - file containing types of phenotype variables for selection of regression model
-#             covardata - covariate data files including one or more covariate columns (default values: NULL)
+#             covardata - covariate data files including one or more covariate columns
 #             outfile - output file of analysis
 #
 # Example:    Rscript model.R testdata/test 1:1000 testdata/test_25000_pheno.txt pheno_1 testdata/test_25000_pheno_types.txt testdata/test_25000_covar.txt testdata/test_1-1000_pheno_1.txt
