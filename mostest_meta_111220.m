@@ -105,8 +105,17 @@ end
 
 
 
-%% calculate weight
-weight_cohort=sqrt(nsubj_cohort)/sqrt(sum(nsubj_cohort));
+%% calculate weight 
+%% This needs to be adjusted for each SNP, depending on which cohorts finite zscores for  that SNP
+%weight_cohort=sqrt(nsubj_cohort)/sqrt(sum(nsubj_cohort));
+
+
+%example:
+%nsubj_cohort = [10, 20, 51]  , total 81
+%weight_cohort = [sqrt(10)/9 , sqrt(20)/9, sqrt(51)/ 9]   - for SNPs such that all z-scores are finite
+%
+%if for a give SNP first cohort has infinite zscore, then
+%weight_cohort = [0           , sqrt(20)/sqrt(20+51),    sqrt(51)/ sqrt(20+51)]
 
 
 %% Perform GWAS by chunk
@@ -122,10 +131,15 @@ chunk=10000;
 
 for i=1:chunk:snps %need to change for different cohort with different nsnps
   j=min(i+chunk-1, snps);
+  num_snps_in_chunk = j-i+1;
   fprintf('gwas: loading snps %i to %i... \n', i, j);    tic;
   
   zmat_orig_chunk = zeros(npheno, j-i+1);
   zmat_perm_chunk = zeros(npheno, j-i+1);
+
+  % Here we need to save zmat for each cohort (don't meta-analyze it yet)
+  zmat_orig_chunk_cohort = zeros(no_cohort, npheno, j-i+1)
+  zmat_perm_chunk_cohort = zeros(no_cohort, npheno, j-i+1)   % 3D array
 
   for no_cohort = 1:no_bfiles
       [~,file_name] = fileparts(bim_files(no_cohort).name);
@@ -143,19 +157,35 @@ for i=1:chunk:snps %need to change for different cohort with different nsnps
       ymat_cohort=dlmread(pheno_cohort);
       
       shuffle_geno_cohort = Shuffle(geno_cohort);
-      [~, zmat_orig_chunk_cohort] = nancorr(ymat_cohort, geno_cohort);
-      [~, zmat_perm_chunk_cohort] = nancorr(ymat_cohort, shuffle_geno_cohort);
-  
-
-
-      zmat_orig_chunk_cohort(~isfinite(zmat_orig_chunk_cohort)) = 0;
-      zmat_perm_chunk_cohort(~isfinite(zmat_perm_chunk_cohort)) = 0;
-      
-      zmat_orig_chunk = zmat_orig_chunk + weight_cohort(no_cohort) * zmat_orig_chunk_cohort;
-      zmat_perm_chunk = zmat_perm_chunk + weight_cohort(no_cohort) * zmat_perm_chunk_cohort;
-
+      [~, tmp] = nancorr(ymat_cohort, geno_cohort);         zmat_orig_chunk_cohort(no_cohort, :, :) = tmp
+      [~, tmp] = nancorr(ymat_cohort, shuffle_geno_cohort); zmat_perm_chunk_cohort(no_cohort, :, :) = tmp
   end
-  
+
+  % weight_cohort should be a matrix of size "num_snps_in_chunk x no_bfiles" to make use of "vectorized" operations in matlab
+  % (havind a for loop across SNPs) is too slow
+
+  for snp_index = 1:num_snps_in_chunk
+    % find snp_defvec, listing cohorts that have finite zscores for that snp
+    pheno_index = 1
+    snp_defvec = isfinite(zmat_orig_chunk_cohort(:, pheno_index, snp_index)) & isfinite(zmat_perm_chunk_cohort(:, pheno_index, snp_index))
+    
+    nsubj_cohort_per_snp = nsubj_cohort
+    nsubj_cohort_per_snp(~snp_defvec) = 0    %  
+    weight_cohort=sqrt(nsubj_cohort_per_snp)/sqrt(sum(nsubj_cohort_per_snp));
+    
+    for no_cohort = 1:no_bfiles
+      if weight_cohort(no_cohort) == 0, continue; end  % skip cohorts 
+
+      %zmat_orig_chunk_cohort(~isfinite(zmat_orig_chunk_cohort)) = 0;  
+      %zmat_perm_chunk_cohort(~isfinite(zmat_perm_chunk_cohort)) = 0;
+
+      zmat_orig_chunk(:, snp_index) = zmat_orig_chunk(:, snp_index) + weight_cohort(no_cohort) * zmat_orig_chunk_cohort(no_cohort, :, snp_index);
+      zmat_perm_chunk(:, snp_index) = zmat_perm_chunk(:, snp_index) + weight_cohort(no_cohort) * zmat_perm_chunk_cohort(no_cohort, :, snp_index);
+    end
+  end
+
+ 
+
   for orig_or_perm  = 1:2
     if orig_or_perm==1, zmat=zmat_orig_chunk'; else zmat=zmat_perm_chunk'; end;
     logpdfvecs(orig_or_perm,i:j) = dot(inv(C0_reg)*zmat', zmat');    % calculate MOSTest test statistic (ToDo: rename logpdfvecs -> mostestvec)
