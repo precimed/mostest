@@ -1,24 +1,27 @@
 #!/bin/bash
 
-genopool=/cluster/projects/p33/projects/mental/geno/generic_qc
-chr=1
+genopool=/cluster/projects/p33/projects/mental/geno_hapmap/by_chunk_1K
+np=42
+chr_from=1
+chr_to=22
 chunksize=1000
-export phenodata=/cluster/projects/p33/projects/mental/pheno/mostest_mental_pheno_200807.csv
-export phenotype=/cluster/projects/p33/projects/mental/pheno/pheno_type_subset.txt
+export phenodata=/cluster/projects/p33/projects/mental/pheno/mostest_mental_pheno_ordinal_65_200907.negative2na.csv
+export phenotype=/cluster/projects/p33/projects/mental/pheno/pheno_type.txt
 export covardata=/cluster/projects/p33/projects/mental/covar/mostest_mental_covar_200807.csv
-export outfolder=/cluster/projects/p33/projects/mental/results/sumstat
+export outfolder=/cluster/projects/p33/projects/mental/results/sumstat3
 
 mkdir -p $outfolder
 
-n_pheno=`head -n1 $phenodata | awk -F ',' '{print NF-1}'`
-for ((j=1; j<=n_pheno; j++)); do
-    export phenoname=`head -n1 $phenodata | awk -v n=$((j+1)) -F ',' '{print $n}'`
+n_pheno=`head -n1 $phenodata | awk -F '\t' '{print NF-1}'`
+for ((j=$np; j<=n_pheno; j++)); do
+    export phenoname=`head -n1 $phenodata | awk -v n=$((j+1)) -F '\t' '{print $n}'`
+    echo $phenoname
     if [ `awk -v fieldid=${phenoname%%-*} '$1==fieldid' $phenotype | wc -l` -eq 0 ]; then
         continue
     fi
-    for ((k=chr; k<=chr; k++)); do
-        fn=$genopool/ukb_imp_chr${k}_v3_qc.fam
-        export genodata=${fn%%.*}
+    for chk in $genopool/ukb_imp_v3_qc.chunk_*.bim; do
+    #for chk in $genopool/ukb_imp_v3_qc.perm.chunk_*.bim; do
+        export genodata=${chk%.*}
         n_snps=`cat $genodata.bim | wc -l`
         for ((i=1; i<=n_snps; i=i+chunksize)); do
             from=$i
@@ -28,10 +31,18 @@ for ((j=1; j<=n_pheno; j++)); do
             fi
             export from to
             export snplist=$from:$to
-            echo $k $snplist $phenoname
-            #sh run_assoc.job
-            sbatch --job-name ${phenoname}_${k}_${from} run_assoc.job
+            bn=$(basename $chk)
+            bn=${bn%.*}
+            bn=${bn##*chunk_}
+            if [ -f $outfolder/${phenoname}/$(basename $genodata)_${from}-${to}.txt ] && [ `cat $outfolder/${phenoname}/$(basename $genodata)_${from}-${to}.txt | wc -l` -eq $((to-from+3)) ]; then
+                continue
+            fi
+            echo $chr $bn $snplist $phenoname
+            sbatch --job-name ${phenoname}_$bn run_assoc.job
+            #sbatch --nice=1000 --job-name ${phenoname}_$bn run_assoc.job
             #break
         done
+        #break
     done
+    break
 done

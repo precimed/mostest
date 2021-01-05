@@ -2,18 +2,18 @@
 
 # Function: This script runs association test between genotype and phenotype data using matched regression model.
 
-# Authors: Yunhan Chu, Alexey A. Shadrin
+# Authors: Yunhan Chu, Alexey A. Shadrin, Guy F. L. Hindley
 
 # (c) 2020-2022 NORMENT, UiO
 
 # Usage:      Rscript model.R genodata snplist phenodata phenoname phenotype covardata outfile
 #
 # Arguments:  genodata  - prefix of genotype plink files
-#             snplist   - a numeric or a character vector indicating a subset of SNPs to be selected (default value: NULL)
+#             snplist   - a numeric or a character vector indicating a subset of SNPs to be selected
 #             phenodata - phenotype data files including one or more phenotype columns
 #             phenoname - a column name of phenotype in phenodata
 #             phenotype - file containing types of phenotype variables for selection of regression model
-#             covardata - covariate data files including one or more covariate columns (default values: NULL)
+#             covardata - covariate data files including one or more covariate columns
 #             outfile - output file of analysis
 #
 # Example:    Rscript model.R testdata/test 1:1000 testdata/test_25000_pheno.txt pheno_1 testdata/test_25000_pheno_types.txt testdata/test_25000_covar.txt testdata/test_1-1000_pheno_1.txt
@@ -54,18 +54,20 @@ library(nnet)
 source("readplink.R")
 options(stringsAsFactors = FALSE)
 
-pheno <- read.table(phenodata, header=T, sep=",", strip.white=T, as.is=T)
+#pheno <- read.table(phenodata, header=T, sep=",", strip.white=T, as.is=T)
+pheno <- read.table(phenodata, header=T, sep="\t", strip.white=T, as.is=T)
 colnames(pheno)[1] <- 'IID'
 pheno <- pheno[,c('IID',sub('^','X',sub('-','.',phenoname)))]
 colnames(pheno) <- c('IID','pheno')
 pheno <- pheno[!is.na(pheno$pheno),]
-pheno <- pheno[pheno$pheno >= 0,]
+#pheno <- pheno[pheno$pheno >= 0,]
 
 phenomap <- read.table(phenotype, header=T, strip.white=T, as.is=T)
 vartype = phenomap$variable_type[phenomap$field_id==unlist(strsplit(phenoname, "-"))[1]][1]
 
 covar <- read.table(covardata, header=T, sep=',', strip.white=T, as.is=T)
 colnames(covar)[1] <- 'IID'
+covar <- covar[,1:13]
 covar <- na.omit(covar)
 covar[,3] <- factor(covar[,3])
 
@@ -128,8 +130,11 @@ for (i in 1:ncol(geno_snpStats)) {
         summ = summary(fmodel)
         beta = summ$coefficients[2,1]
         se = summ$coefficients[2,2]
-        z = beta/se
-        pval = 2*pnorm(-abs(z))
+        pval = summ$coefficients[2,4]
+        z = abs(qnorm(pval/2))
+        if (beta < 0) {
+            z = -z
+        }
     }else if (vartype == 'binary') {
         # logistic regression
         dat$pheno <- factor(dat$pheno)
@@ -157,11 +162,17 @@ for (i in 1:ncol(geno_snpStats)) {
         # ordinal logistic regression
         dat$pheno <- factor(dat$pheno)
         fmodel <- polr(pheno ~ ., data=dat)
-        suppressMessages(summ <- summary(fmodel))
-        beta = summ$coefficients[1,1]
-        se = summ$coefficients[1,2]
-        z = beta/se
-        pval = 2*pnorm(-abs(z))
+        beta = 0
+        se = 1
+        z = 0
+        pval = 1
+        try({
+            suppressMessages(summ <- summary(fmodel))
+            beta = summ$coefficients[1,1]
+            se = summ$coefficients[1,2]
+            z = beta/se
+            pval = 2*pnorm(-abs(z))
+        })
     }else if (vartype == 'count') {
         # poisson regression
         fmodel <- glm(pheno ~ ., family=poisson, data=dat)
