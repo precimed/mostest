@@ -123,6 +123,8 @@ if isempty(zmat_name)
 
     zmat_orig(i:j, :) = zmat_orig_chunk';
     zmat_perm(i:j, :) = zmat_perm_chunk';
+    
+    % https://stats.stackexchange.com/questions/32464/how-does-the-correlation-coefficient-differ-from-regression-slope
     beta_factor = std(ymat)' * (1./std(geno, 'omitnan'));
     beta_orig(i:j, :) = transpose(rmat_orig_chunk .* beta_factor);
     beta_perm(i:j, :) = transpose(rmat_perm_chunk .* beta_factor);
