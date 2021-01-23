@@ -16,10 +16,10 @@ note: X=1:n_cohort
 ./plink --bfile /path/to/chr21 --keep /path/to/subj_X.txt  --make-bed --extract /path/to/snps_X.txt --out /path/to/cohortX
 
 
-4. Using merge_list to align snps of all cohorts into a comman snps list
+4. Using merge_list to align snps of all cohorts into a common snps list
 ./plink --bfile /path/to/cohort1 --merge-list /path/to/list.txt --make-bed --allow-no-sex --out /path/to/merged
 
-note: list.txt is a list of .bed .bim .fam files of all cohorts
+note: list.txt is a list of .bed .bim .fam files of all cohorts from 2 - no.cohort
 
 5. Extract sub bim,bed,fam files of cohorts without extracting the snps
 ./plink --bfile /path/to/merged --keep /path/to/subj_X.txt  --make-bed --out /path/to/cohort_X
@@ -29,7 +29,7 @@ note: list.txt is a list of .bed .bim .fam files of all cohorts
 It’s important that the corresponding pheno data and geno data have the same prefix in names.
 So that the main code mostest_meta_std reads those files in the right order. 
 
-7.Run mostest_meta_std.
+7. Run mostest_meta_std.
 
 
 Above steps can be run by job.sh
