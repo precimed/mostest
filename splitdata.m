@@ -55,8 +55,8 @@ fam_c1=fam_file{1};
 fam_c2=fam_file{2};
 
 %% distribute subj (fam file) into different sizes of cohorts
-[cohort{1},cohort{2},cohort{3}] = dividerand(nsubj,0.4,0.3,0.3);
-
+%[cohort{1},cohort{2},cohort{3}] = dividerand(nsubj,0.4,0.3,0.3);
+cohort=divide(nsubj,n_cohort);
 
 for i=1:n_cohort
     subj=fopen(['subj_',num2str(i),'.txt'],'w');
