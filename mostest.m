@@ -254,3 +254,13 @@ save(fname, '-v7', ...
 fprintf('Done.\n')
 
 fprintf('MOSTest analysis is completed.\n')
+
+
+
+if 0
+  % QQ plots for minP and MOSTest - permuted vs original distribution of the test statistics (no beta/gamma fitting)
+  x=sort(-log10(minpvecs(2, ivec_snp_good')));  y=sort(-log10(minpvecs(1, ivec_snp_good')));  lim=20; % x=permuted; y=original
+  figure(1); clf; hold on; plot(x,y, '.'); xlim([0, lim]); ylim([0, lim]); plot([0, lim], [0, lim]); xlabel('minP statistic, permuted'); ylabel('minP statistic, original'); title('minP: QQ plot original vs permuted');
+  x=sort(mostvecs(2, ivec_snp_good'));  y=sort(mostvecs(1, ivec_snp_good'));  lim=400;; % x=permuted; y=original
+  figure(2); clf; hold on; plot(x,y, '.'); xlim([0, lim]); ylim([0, lim]); plot([0, lim], [0, lim]); xlabel('MOSTest statistic, permuted'); ylabel('MOSTest statistic, original'); title('MOSTest: QQ plot original vs permuted');
+end
