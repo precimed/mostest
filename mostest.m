@@ -19,7 +19,7 @@ end
 
 % debug features - internal use only
 if ~exist('perform_cca', 'var'), perform_cca = false; end;  % perform canonical correlation analysis
-if ~exist('lam_reg', 'var'), lam_reg = 1.0; end;  %  default is to disable pre-whitening filter
+if ~exist('lam_reg', 'var'), lam_reg = nan; end;  %  default is to disable pre-whitening filter
 if ~exist('snps', 'var'), snps=nan; end;                                          % number of SNPs in the analysis
 if ~exist('nsubj', 'var'), nsubj=nan; end;                                        % number of subjects in the analysis
 if ~exist('paretotails_quantile', 'var'), paretotails_quantile = 0.9999; end;       % a number close to 1.0, used as a second argument in MATLAB's paretotails
@@ -81,13 +81,21 @@ if isempty(zmat_name)
   fprintf('kurtosis before INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 1)), max(kurt(:, 1)))
   if apply_int, fprintf('kurtosis after  INT - %.2f %.2f (mean, max)\n', mean(kurt(:, 2)), max(kurt(:, 2))); end;
 
-  C = corr(ymat_orig);
-  C_reg = (1-lam_reg)*C + lam_reg*diag(max(0.01,diag(C))); % Ridge regularized covariance matrix
-  C_inv = inv(C_reg);
-  W_wht = chol(C_inv); % Whitening filter
-  ymat = ymat_orig*W_wht'; % Whitened residualized data
+  if isfinite(lam_reg)
+    C = corr(ymat_orig);
+    C_reg = (1-lam_reg)*C + lam_reg*diag(max(0.01,diag(C))); % Ridge regularized covariance matrix
+    C_inv = inv(C_reg);
+    W_wht = chol(C_inv); % Whitening filter
+    ymat = ymat_orig*W_wht'; % Whitened residualized data
+  else
+    ymat = ymat_orig;
+  end
 
-  ymat_corr = corr(ymat);
+  if use_pheno_corr
+    ymat_corr = corr(ymat);
+  else
+    ymat_corr = 'not computed';
+  end
 
   fprintf('Perform GWAS on %s (%i SNPs are expected)...\n', bfile, snps)
   zmat_orig=zeros(snps, npheno, 'single');
