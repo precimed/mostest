@@ -91,7 +91,13 @@ def get_basket_release_files(baskets_dir):
     ukb_prefixes = [os.path.splitext(de)[0] for de in os.scandir(baskets_dir)
                     if ukb_csv_pattern.match(de.name) and de.stat().st_size > 0]
     print(f'    {len(ukb_prefixes)} basket release files')
-    basket_release_files = [BasketReleaseFile.from_prefix(prefix) for prefix in ukb_prefixes]
+    basket_release_files = []
+    for prefix in ukb_prefixes:
+        try:
+            basket_release_files.append(BasketReleaseFile.from_prefix(prefix))
+        except ValueError as err:
+            print(f"ERROR: {err}")
+            print("Skipping this basket")
     return basket_release_files
 
 
