@@ -47,5 +47,22 @@ xlim([-index_cohort(end) index_cohort(end)])
 xlim([index_cohort(1) index_cohort(end)])
 legend(legendInfo,'Position',[0.7 0.2 0.1 0.2])
 
+%z_eff=z2/beta;
+z_eff=index_cohort(end)*z2./z2(:,1)
+
+
+%% effective sample size
+figure
+X = cov
+
+Y = floor(z_eff(n_cohort,:))
+
+plot(X,Y,'k-s')
+xlim([0 cov(end)*1.1])
+ylim([0 Y(1)*1.1])
+strValues = strtrim(cellstr(num2str([X(:) Y(:)],'(%d,%d)')));
+text(X,Y,strValues,'VerticalAlignment','bottom');
+xlabel('Number of covariates')
+ylabel('Effective sample size')
 
 
