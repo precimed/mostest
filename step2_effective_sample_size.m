@@ -2,8 +2,8 @@ clear all;
 close all;
 clc;
 
-n_cohort=45;
-n_sample=randi([50 70],1,n_cohort);
+n_cohort=11;
+n_sample=randi([250 270],1,n_cohort);
 n_sample_t=sum(n_sample);
 index_cohort=cumsum(n_sample);
 
@@ -15,8 +15,9 @@ eps=rand(n_sample_t,1);
 y_t=x_t*beta+eps;
 rat=var(x_t*beta)/var(y_t);
 
-cov=0:200:index_cohort(end);%sort(randperm(55,n_cov));% number of covariates
-n_cov=size(cov,2)
+cov=0:500:index_cohort(end);% number of covariates
+n_cov=size(cov,2)% loop for different number of covariates
+
 for i=1:n_cohort 
     x_i=x_t(1:index_cohort(i));
     y_i=y_t(1:index_cohort(i));
@@ -43,7 +44,8 @@ end
 xlabel('Sample size')
 ylabel('Z^2')
 xlim([-index_cohort(end) index_cohort(end)])
-xlim([0 index_cohort(end)])
+xlim([index_cohort(1) index_cohort(end)])
 legend(legendInfo,'Position',[0.7 0.2 0.1 0.2])
+
 
 
