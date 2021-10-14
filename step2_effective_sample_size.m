@@ -47,7 +47,7 @@ xlim([-index_cohort(end) index_cohort(end)])
 xlim([index_cohort(1) index_cohort(end)])
 legend(legendInfo,'Position',[0.7 0.2 0.1 0.2])
 
-%z_eff=z2/beta;
+%z_eff=z2/coe;
 z_eff=index_cohort(end)*z2./z2(:,1)
 
 
