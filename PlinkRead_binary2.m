@@ -8,6 +8,8 @@ nsnp = length(snps);
 % bit shift to generate the genovalue matrix
 bedprefix = sprintf('%s.bed', fileprefix);
 
+%load('PlinkRead_binary2_geno_values.mat')
+
 if isempty(geno_values)
     geno_values = zeros(256,4,'int8');
     geno_code = [-1,1,0,2];
@@ -22,6 +24,7 @@ if isempty(geno_values)
         indvec(indvec == 0) = 4;
         geno_values(i,:) = geno_code(indvec);
     end
+    %save('PlinkRead_binary2_geno_values.mat', '-v7', 'geno_values')
 end
 
 % Read in the binary file
