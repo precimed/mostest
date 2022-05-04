@@ -1,0 +1,40 @@
+Running the analysis is currently a two-step procedure (many parameters are similar to the original version, but there are several notable additions):
+
+(1) First step: mostest_light_stats.m
+This step runs univariate GWAS and estimates MOSTest (and  min-P) test statistics. It can be very time consuming (if num_perm parameter is large, see below). With default num_perm=1, it should be completed within 24 hours (i ran it on MMIL using 8 cores and 32GB RAM ,you may also try 16 cores and 64GB, which should be faster).
+
+Required input parameters:
+bfile: (like plink --bfile) full prefix of plink bim/bed/fam files.
+pheno: path to file with phenotypes. The file can be with or without header, delimiter is defined by 'pheno_file_sep' variable. Phenotypes in columns, samples in rows. The order of rows (samples) should correspond to <bfile>.fam.
+out: output file prefix (<out>.mat will be saved).
+
+Important optional parameters:
+num_eigval_to_keep: regularization parameter (default: 0 - no regularization). In our vertex-wise paper num_eigval_to_keep=10 for area, num_eigval_to_keep=20 for thickness. For this study, I think, a smaller value will work better (<= 5), since there are only 19 features. So it might be reasonable to try several different values (e.g. 2,4,8,16).
+pheno_file_sep: column separator of the pheno file (default: 'tab').
+num_perm: number of genotype permutations (default: 1). I believe, num_perm=1 should give reasonable results with proper extrapolation in the second step (mostest_light_pvals.m). For the VW paper i used num_perm=22 (to cover p-values up to 5E-8 with empirical distribution without extrapolation, results were, however, very close to num_perm=1).
+
+Other optional parameters can be kept default.
+
+How to run example:
+$matlab -nodisplay -nosplash -r "bfile='/path/to/bfile'; pheno=/path/to/pheno.csv; pheno_file_sep=','; num_eigval_to_keep=10; out='path/to/result_stats'; mostest_light_stats; exit"
+
+
+(2) Second step: mostest_light_pvals.m
+Use output of step (1) to produce MOSTest and min-P p-values. This step is very fast.
+
+Required input parameters:
+stats_file: mat file created by mostest_light_stats.m
+out: output file prefix (<out>.mat will be saved)
+
+Important optional parameters:
+maf_threshold: ignore all variants with maf < maf_threshold (default: 0.005, that's what we used in the original and VW MOSTest papers).
+
+Other optional parameters can be kept default.
+
+How to run example:
+$matlab -nodisplay -nosplash -r "stats_file='/path/to/result_stats';out='path/to/result_pvals'; mostest_light_pvals; exit"
+
+
+Then to convert results into human readable format (also compatible with FUMA), you can run pvals2csv.py script. The script requires numpy, scipy and pandas packages (i only used it with python3, but python2 will probably also work).
+
+$python pvals2csv.py --mat /path/to/result_stats.mat --bim /path/to/bfile.bim --out /path/to/output_prefix Four files will be created, original and permuted sumsats for MOSTest and for min-P: /path/to/output_prefix.<most/minp>.<orig/perm>.csv.gz
