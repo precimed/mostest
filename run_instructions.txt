@@ -16,7 +16,7 @@ num_perm: number of genotype permutations (default: 1). I believe, num_perm=1 sh
 Other optional parameters can be kept default.
 
 How to run example:
-$matlab -nodisplay -nosplash -r "bfile='/path/to/bfile'; pheno=/path/to/pheno.csv; pheno_file_sep=','; num_eigval_to_keep=10; out='path/to/result_stats'; mostest_light_stats; exit"
+$matlab -nodisplay -nosplash -r "bfile='/path/to/bfile'; pheno='/path/to/pheno.csv'; pheno_file_sep=','; num_eigval_to_keep=10; out='path/to/result_stats'; mostest_light_stats; exit"
 
 
 (2) Second step: mostest_light_pvals.m
