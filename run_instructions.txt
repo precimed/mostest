@@ -9,7 +9,7 @@ pheno: path to file with phenotypes. The file can be with or without header, del
 out: output file prefix (<out>.mat will be saved).
 
 Important optional parameters:
-num_eigval_to_keep: regularization parameter (default: 0 - no regularization). In our vertex-wise paper num_eigval_to_keep=10 for area, num_eigval_to_keep=20 for thickness. For this study, I think, a smaller value will work better (<= 5), since there are only 19 features. So it might be reasonable to try several different values (e.g. 2,4,8,16).
+num_eigval_to_keep: regularization parameter (default: 0 - no regularization). In our vertex-wise paper num_eigval_to_keep=10 for area, num_eigval_to_keep=20 for thickness. This parameter is study-specific, and always should be between 0 and N, where N is the number of phenotypes in the analysis. It might be reasonable to try several different values (e.g. 0, 2, 4, 8, 16, ..., N) and select the one providing the best loci yeild.
 pheno_file_sep: column separator of the pheno file (default: 'tab').
 num_perm: number of genotype permutations (default: 1). I believe, num_perm=1 should give reasonable results with proper extrapolation in the second step (mostest_light_pvals.m). For the VW paper i used num_perm=22 (to cover p-values up to 5E-8 with empirical distribution without extrapolation, results were, however, very close to num_perm=1).
 
@@ -38,3 +38,4 @@ $matlab -nodisplay -nosplash -r "stats_file='/path/to/result_stats';out='path/to
 Then to convert results into human readable format (also compatible with FUMA), you can run pvals2csv.py script. The script requires numpy, scipy and pandas packages (i only used it with python3, but python2 will probably also work).
 
 $python pvals2csv.py --mat /path/to/result_stats.mat --bim /path/to/bfile.bim --out /path/to/output_prefix Four files will be created, original and permuted sumsats for MOSTest and for min-P: /path/to/output_prefix.<most/minp>.<orig/perm>.csv.gz
+Obtained *.orig.csv.gz files could be uploaded to FUMA for post-GWAS analysis.
