@@ -40,6 +40,7 @@ MOSTest require the following input files
 
 NB (!) Rows in the phenotype file must correspond to the same set of individuals,
 in exactly the same order, as the .fam file of you bfile argument.
+NB2 Missing values should be coded as 'NaN' in order to be handled correctly
 
 ## Run MOSTest (demo)
 Download ``mostest_demo.tar.gz`` file from [here](https://1drv.ms/u/s!Ai1YZmdFa9ati40Inztrv_4erqcdWw?e=ixWDUe)
