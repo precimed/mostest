@@ -136,7 +136,7 @@ Output of ``process_results.py``:
 
 ## Other considerations
 
-* all phenotypes should be pre-residualized for global measures, for example in R as follows:
+* all phenotypes should be pre-residualized for covariates, for example in R as follows:
   ```
   TempModel <- summary(lm(get(f) ~ Age + Sex + Scanner + Euler + genBatch + C1 + C2 + C3 + C4 + C5 + C6 + C7 + C8 + C9 + C10, data=DM)) 
   DM[,which(colnames(DM)==f)] <- TempModel$coefficients[1,1] + TempModel$residuals
