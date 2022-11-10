@@ -32,7 +32,7 @@ for m in ('most','minp'):
         print(f'processing {m} {s} ... ', end='', flush=True)
         pval = 10**(-mat[f'{m}_log10pval_{s}'].flatten())
         bim['PVAL'] = pval
-        bim['Z'] = -scipy.stats.norm.ppf(0.5*pval)
+        bim['Z_FAKE'] = -scipy.stats.norm.ppf(0.5*pval)
         out_path = f'{args.out}.{m}.{s}.csv.gz'
         bim.to_csv(out_path, sep='\t', float_format='%g', index=False)
         print(out_path)
