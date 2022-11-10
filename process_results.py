@@ -52,7 +52,7 @@ if __name__ == '__main__':
     print('Generate {}.***.sumstats files...'.format(out))
     for test in ['minp_log10pval_orig', 'most_log10pval_orig', 'minp_log10pval_perm', 'most_log10pval_perm']:
         bim['PVAL'] = np.power(10, -mat[test].flatten())
-        bim['Z'] = -stats.norm.ppf(bim['PVAL'].values*0.5) #*effect_sign.astype(np.float64) - effect size not available from MOSTest and minP
+        bim['Z_FAKE'] = -stats.norm.ppf(bim['PVAL'].values*0.5) #*effect_sign.astype(np.float64) - effect size not available from MOSTest and minP
         bim['N'] = mat['nvec']
         bim.to_csv('{}.{}.sumstats'.format(out, test.replace('_log10pval', '')), sep='\t', na_rep="NA", index=False)
 
