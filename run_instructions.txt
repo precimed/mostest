@@ -5,7 +5,7 @@ This step runs univariate GWAS and estimates MOSTest (and  min-P) test statistic
 
 Required input parameters:
 bfile: (like plink --bfile) full prefix of plink bim/bed/fam files.
-pheno: path to file with preresidualized phenotypes. The file can be with or without header, delimiter is defined by 'pheno_file_sep' variable. Phenotypes in columns, samples in rows. The order of rows (samples) should correspond to <bfile>.fam.
+pheno: path to file with preresidualized phenotypes (no column with sample IDs, only columns with phenotype values). The file can be with or without header, delimiter is defined by 'pheno_file_sep' variable. Phenotypes in columns, samples in rows. The order of rows (samples) should correspond to <bfile>.fam. All phenotypic values should be finete real numbers (i.e. no "NA" or infinite values are allowed).
 out: output file prefix (<out>.mat will be saved).
 
 Important optional parameters:
